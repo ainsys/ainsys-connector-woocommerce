@@ -223,25 +223,14 @@ class Process_Products extends Process implements Hooked {
 			return [];
 		}
 
-		/*$product = wc_get_product($product_id);
-		$prepare = new Prepare_Product_Data($product);
-		$data = $prepare->prepare_data();*/
-
 		$product = wc_get_product($product_id);
-
 		$prepare = new Prepare_Product_Data($product);
 		$data = $prepare->prepare_data();
 
 		if($product->is_type('variable')){
 
-			foreach($product->get_children() as $variation_id){
-
-				$variation = wc_get_product($variation_id);
-				$prepare_variation = new Prepare_Product_Data($variation, 'variation');
-				$variation_data = $prepare_variation->prepare_data();
-				$data['variations'][] = $variation_data;
-
-			}
+			$variations = new Prepare_Product_Variation_Data($product);
+			$data['variations'] = $variations->prepare_data();
 
 		}
 
