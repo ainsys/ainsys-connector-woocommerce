@@ -1,0 +1,217 @@
+{
+  "id": 17960,
+  "type": "grouped",
+  "name": "Test Product",
+  "formatted_name": "Test Product (TESTSKU123)",
+  "title": "Test Product",
+  "slug": "test-product",
+  "date_created": {
+    "date": "2022-12-26 12:26:55.000000",
+    "timezone_type": 1,
+    "timezone": "+00:00"
+  },
+  "date_modified": {
+    "date": "2023-01-07 18:29:46.000000",
+    "timezone_type": 1,
+    "timezone": "+00:00"
+  },
+  "status": "publish",
+  "is_featured": false,
+  "catalog_visibility": "visible",
+  "description": "",
+  "short_description": "",
+  "sku": "TESTSKU123",
+  "menu_order": 0,
+  "is_virtual": false,
+  "permalink": "http:\/\/ainsys.loc\/product\/test-product\/",
+  "total_sales": 0,
+  "upsell_ids": {
+    "0": 14157
+  },
+  "cross_sell_ids": {},
+  "related_products": {},
+  "grouped_products_ids": {
+    "0": 14157,
+    "1": 14169
+  },
+  "category_ids": {
+    "0": 80,
+    "1": 79
+  },
+  "tag_ids": {
+    "0": 422
+  },
+  "default_attributes": {},
+  "attributes": {
+    "test": {
+      "id": 0,
+      "name": "\u0422\u0435\u0441\u0442",
+      "position": 0,
+      "visible": true,
+      "variation": true,
+      "options": {
+        "0": "1",
+        "1": "2",
+        "2": "3"
+      }
+    },
+    "pa_automatization-1": {
+      "id": 29,
+      "name": "pa_automatization-1",
+      "position": 1,
+      "visible": true,
+      "variation": true,
+      "options": {
+        "0": 425
+      }
+    }
+  },
+  "image_id": "17954",
+  "gallery_images_ids": {
+    "0": 17954,
+    "1": 17906,
+    "2": 17905,
+    "3": 17886
+  },
+  "reviews_allowed": false,
+  "rating_counts": {},
+  "average_rating": "0",
+  "review_count": 0,
+  "metadata": {
+    "0": {
+      "id": 173429,
+      "key": "hours_for_development",
+      "value": "1"
+    },
+    "1": {
+      "id": 173430,
+      "key": "minutes_to_setup",
+      "value": "60"
+    },
+    "2": {
+      "id": 173439,
+      "key": "prod-info-text",
+      "value": "All Data TEST"
+    },
+    "3": {
+      "id": 173440,
+      "key": "_prod-info-text",
+      "value": "field_6213efb8b237f"
+    },
+    "4": {
+      "id": 173441,
+      "key": "poh-sist-repeat",
+      "value": ""
+    },
+    "5": {
+      "id": 173442,
+      "key": "_poh-sist-repeat",
+      "value": "field_6213d828e47f1"
+    },
+    "6": {
+      "id": 173443,
+      "key": "what-in-sys",
+      "value": ""
+    },
+    "7": {
+      "id": 173444,
+      "key": "_what-in-sys",
+      "value": "field_6213f3a2b2381"
+    },
+    "8": {
+      "id": 173445,
+      "key": "color_1",
+      "value": ""
+    },
+    "9": {
+      "id": 173446,
+      "key": "_color_1",
+      "value": "field_628f54dc82b87"
+    },
+    "10": {
+      "id": 173447,
+      "key": "color_2",
+      "value": ""
+    },
+    "11": {
+      "id": 173448,
+      "key": "_color_2",
+      "value": "field_628f54fd82b88"
+    },
+    "12": {
+      "id": 173449,
+      "key": "main_category",
+      "value": ""
+    },
+    "13": {
+      "id": 173450,
+      "key": "_main_category",
+      "value": "field_628f551d82b89"
+    },
+    "14": {
+      "id": 173451,
+      "key": "logo",
+      "value": ""
+    },
+    "15": {
+      "id": 173452,
+      "key": "_logo",
+      "value": "field_628f555282b8a"
+    },
+    "16": {
+      "id": 173453,
+      "key": "_yoast_wpseo_primary_product_cat",
+      "value": "79"
+    },
+    "17": {
+      "id": 173454,
+      "key": "_yoast_wpseo_estimated-reading-time-minutes",
+      "value": ""
+    },
+    "18": {
+      "id": 173455,
+      "key": "_yoast_wpseo_wordproof_timestamp",
+      "value": ""
+    },
+    "19": {
+      "id": 173868,
+      "key": "ainsys_clear_header",
+      "value": "0"
+    },
+    "20": {
+      "id": 173869,
+      "key": "_ainsys_clear_header",
+      "value": "field_63aefa4075a41"
+    },
+    "21": {
+      "id": 173870,
+      "key": "ainsys_select_menu",
+      "value": "us"
+    },
+    "22": {
+      "id": 173871,
+      "key": "_ainsys_select_menu",
+      "value": "field_63aef60de07d6"
+    },
+    "23": {
+      "id": 173872,
+      "key": "ainsys_select_menu_style",
+      "value": "default"
+    },
+    "24": {
+      "id": 173873,
+      "key": "_ainsys_select_menu_style",
+      "value": "field_63aed55196de6"
+    },
+    "25": {
+      "id": 173955,
+      "key": "_product_url",
+      "value": "http:\/\/ainsys.loc\/"
+    },
+    "26": {
+      "id": 173956,
+      "key": "_button_text",
+      "value": "Button text"
+    }
+  }
+}

@@ -3,6 +3,7 @@
 namespace Ainsys\Connector\Woocommerce;
 
 use Ainsys\Connector\Master\Core;
+use Ainsys\Connector\Master\DI_Container;
 use Ainsys\Connector\Master\Hooked;
 use Ainsys\Connector\Master\Logger;
 use Ainsys\Connector\Master\Plugin_Common;
@@ -11,7 +12,10 @@ use Ainsys\Connector\Master\Settings\Admin_UI;
 use Ainsys\Connector\Master\UTM_Handler;
 use Ainsys\Connector\Woocommerce\Webhooks\Handle_Order;
 use Ainsys\Connector\Woocommerce\Webhooks\Handle_Product;
-use Ainsys\Connector\Woocommerce\Woo_UI;
+use Ainsys\Connector\Woocommerce\Webhooks\Handle_Product_2;
+use Ainsys\Connector\Woocommerce\WP\Process_Orders;
+use Ainsys\Connector\Woocommerce\WP\Process_Products;
+use Ainsys\Connector\Woocommerce\Prepare_Product_Variation_Data;
 
 class Plugin implements Hooked {
 
@@ -42,22 +46,30 @@ class Plugin implements Hooked {
 	 */
 	private $admin_ui;
 
+	/**
+	 * @var DI_Container;
+	 */
+	public $di_container;
+
 
 	public function __construct( Core $core, Logger $logger, UTM_Handler $UTM_handler, Settings $settings, Admin_UI $admin_ui ) {
-		$this->core        = $core;
-		$this->logger      = $logger;
 		$this->UTM_handler = $UTM_handler;
 		$this->settings    = $settings;
 		$this->admin_ui    = $admin_ui;
 
 		$this->init_plugin_metadata();
 
-		$this->components['product_webhook'] = new Handle_Product();
-		$this->components['order_webhook']   = new Handle_Order();
+		$this->di_container = DI_Container::get_instance();
 
-		$woo_ui = new Woo_UI( $this, $this->logger, $this->admin_ui );
+
+//		$this->components['product_webhook'] = $this->di_container->resolve(Handle_Product::class);
+		$this->components['product_webhook'] = $this->di_container->resolve(Handle_Product_2::class);
+		$this->components['order_webhook'] = $this->di_container->resolve(Handle_Order::class);
+
+		$this->components['process_products'] = $this->di_container->resolve(Process_Products::class);
+		$this->components['process_orders'] = $this->di_container->resolve(Process_Orders::class);
+
 	}
-
 
 	/**
 	 * Links all logic to WP hooks.
@@ -65,17 +77,14 @@ class Plugin implements Hooked {
 	 * @return void
 	 */
 	public function init_hooks() {
+
 		add_filter( 'ainsys_status_list', array( $this, 'add_status_of_component' ), 10, 1 );
+
 		if ( $this->is_woocommerce_active() ) {
-			// add hooks.
-			add_filter( 'ainsys_get_entities_list', array( $this, 'add_entity_to_list' ), 10, 1 );
-			add_filter( 'ainsys_get_entity_fields_handlers', array( $this, 'add_fields_getters_for_entities' ), 10, 1 );
-			add_filter( 'ainsys_default_apis_for_entities', array( $this, 'add_default_api_for_entities_option' ), 10, 1 );
 
 			add_action( 'woocommerce_checkout_order_processed', array( $this, 'new_order_processed' ) );
 			add_action( 'post_updated', array( $this, 'ainsys_update_order' ), 10, 4 );
 			add_action( 'woocommerce_order_status_changed', array( $this, 'send_order_status_update_to_ainsys' ) );
-			add_action( 'woocommerce_update_product', array( $this, 'send_update_product_to_ainsys' ), 10, 3 );
 
 			foreach ( $this->components as $component ) {
 				if ( $component instanceof Hooked ) {
@@ -107,25 +116,6 @@ class Plugin implements Hooked {
 	 */
 	public function is_woocommerce_active() {
 		return $this->is_plugin_active( 'woocommerce/woocommerce.php' );
-	}
-
-	/**
-	 * Adds woocommerce entities to the entities list.
-	 *
-	 * @return array
-	 */
-	public function add_entity_to_list( $entities_list = array() ) {
-
-		$entities_list['order']   = __( 'Order / fields', AINSYS_CONNECTOR_TEXTDOMAIN );
-		$entities_list['product'] = __( 'Product / fields', AINSYS_CONNECTOR_TEXTDOMAIN );
-
-		if ( function_exists( 'wc_coupons_enabled' ) ) {
-			if ( wc_coupons_enabled() ) {
-				$entities_list['coupons'] = __( 'Coupons / fields', AINSYS_CONNECTOR_TEXTDOMAIN );
-			}
-		}
-
-		return $entities_list;
 	}
 
 	/**
@@ -180,24 +170,26 @@ class Plugin implements Hooked {
 			);
 
 			try {
-				$server_response = $this->core->curl_exec_func( $request_data );
+				$server_response = Core::curl_exec_func( $request_data );
 			} catch ( \Exception $e ) {
 				$server_response = 'Error: ' . $e->getMessage();
-				$this->core->send_error_email( $server_response );
+				Core::send_error_email( $server_response );
 			}
 
-			$this->logger->save_log_information( $order_id, $request_action, serialize( $request_data ), serialize( $server_response ), 0 );
+			Logger::save_log_information( $order_id, $request_action, serialize( $request_data ), serialize( $server_response ), 0 );
 
 			if ( $test ) {
 				$result = array(
 					'request'  => $request_data,
 					'response' => $server_response,
 				);
+
 				return $result;
 			} else {
 				return;
 			}
 		}
+
 		return;
 	}
 
@@ -293,7 +285,7 @@ class Plugin implements Hooked {
 			$this->core->send_error_email( $server_response );
 		}
 
-		$this->logger->save_log_information( $order_id, $request_action, serialize( $order_data ), serialize( $server_response ), 0 );
+		Logger::save([$order_id, $request_action, serialize( $order_data ), serialize( $server_response )]);
 
 		return;
 	}
@@ -327,13 +319,25 @@ class Plugin implements Hooked {
 			$this->core->send_error_email( $server_response );
 		}
 
-		$this->logger->save_log_information( $product_id, $request_action, serialize( $request_data ), serialize( $server_response ), 0 );
+		Logger::save(
+			[
+				'object_id'       => $product_id,
+				'entity'          => 'product',
+//				'entity'          => $object_name,
+				'request_action'  => $request_action,
+				'request_type'    => 'outgoing',
+				'request_data'    => serialize( $request_data ),
+				'server_response' => serialize( $server_response ),
+				'error'           => false !== strpos( $server_response, 'Error:' ),
+			]
+		);
 
 		if ( $test ) {
 			$result = array(
 				'request'  => $request_data,
 				'response' => $server_response,
 			);
+
 			return $result;
 		} else {
 			return;
@@ -348,6 +352,7 @@ class Plugin implements Hooked {
 	 * @return array
 	 */
 	private function prepare_fields( $data = array() ) {
+
 		$all_fields = WC()->checkout->get_checkout_fields();
 
 		$prepare_data = array();
@@ -493,6 +498,7 @@ class Plugin implements Hooked {
 	 * @return array
 	 */
 	private function prepare_single_product( $product ) {
+
 		if ( empty( $product ) ) {
 			return array();
 		}
@@ -549,7 +555,7 @@ class Plugin implements Hooked {
 			'tags'               => wc_get_object_terms( $product->get_id(), 'product_tag', 'name' ),
 			//'images'             => $this->get_images( $product ),
 			'featured_src'       => wp_get_attachment_url( get_post_thumbnail_id( $product->get_id() ) ),
-			//'attributes'         => $this->get_attributes( $product ),
+//			'attributes'         => $product->get_attributes(),
 			//'downloads'          => $this->get_downloads( $product ),
 			'download_limit'     => $product->get_download_limit(),
 			'download_expiry'    => $product->get_download_expiry(),
