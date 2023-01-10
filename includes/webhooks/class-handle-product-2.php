@@ -24,7 +24,7 @@ class Handle_Product_2 extends Handle implements Hooked, Webhook_Handler {
 	 *
 	 * @return string
 	 */
-	protected function create( array $data, string $action ): string {
+	protected function create( array $data, string $action ): array {
 
 		if ( Conditions::has_entity_disable( self::$entity, $action, 'incoming' ) ) {
 			return sprintf( __( 'Error: %s creation is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity );
@@ -57,7 +57,10 @@ class Handle_Product_2 extends Handle implements Hooked, Webhook_Handler {
 			$new_product->save();
 		}
 
-		return $this->get_message( 'test', $data, self::$entity, $action );
+		return [
+			'id' => true, // временно
+			'message' => $this->get_message( 'test', $data, self::$entity, $action )
+		];
 
 	}
 
