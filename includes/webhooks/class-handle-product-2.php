@@ -72,11 +72,16 @@ class Handle_Product_2 extends Handle implements Hooked, Webhook_Handler {
 	 *
 	 * @return string
 	 */
-	protected function update( $data, $action, $object_id ): string {
+	protected function update( $data, $action, $object_id ): array {
 
 		if ( Conditions::has_entity_disable( self::$entity, $action, 'incoming' ) ) {
 			return sprintf( __( 'Error: %s update is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity );
 		}
+
+		return [
+			'id' => true, // временно
+			'message' => $this->get_message( 'test', $data, self::$entity, $action )
+		];
 
 	}
 
@@ -88,7 +93,7 @@ class Handle_Product_2 extends Handle implements Hooked, Webhook_Handler {
 	 *
 	 * @return string
 	 */
-	protected function delete( $object_id, $data, $action ): string {
+	protected function delete( $object_id, $data, $action ): array {
 
 		if ( Conditions::has_entity_disable( self::$entity, $action, 'incoming' ) ) {
 			return sprintf( __( 'Error: %s delete is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity );
@@ -96,7 +101,11 @@ class Handle_Product_2 extends Handle implements Hooked, Webhook_Handler {
 
 		$result = wp_delete_post( $object_id );
 
-		return $this->get_message( $result, $data, self::$entity, $action );
+		return [
+			'id' => true, // временно
+			'message' => $this->get_message( 'test', $data, self::$entity, $action )
+		];
+
 	}
 
 }
