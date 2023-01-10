@@ -57,6 +57,8 @@ class Handle_Product_2 extends Handle implements Hooked, Webhook_Handler {
 			$new_product->save();
 		}
 
+		return $this->get_message( 'test', $data, self::$entity, $action );
+
 	}
 
 
