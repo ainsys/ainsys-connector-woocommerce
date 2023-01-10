@@ -1,0 +1,323 @@
+{
+  "id": 17960,
+  "type": "variable",
+  "name": "Test Product",
+  "formatted_name": "Test Product (TESTSKU123)",
+  "slug": "test-product",
+  "date_created": {
+    "date": "2022-12-26 12:26:55.000000",
+    "timezone_type": 1,
+    "timezone": "+00:00"
+  },
+  "date_modified": {
+    "date": "2023-01-07 18:37:35.000000",
+    "timezone_type": 1,
+    "timezone": "+00:00"
+  },
+  "status": "publish",
+  "is_featured": false,
+  "catalog_visibility": "visible",
+  "description": "",
+  "short_description": "",
+  "sku": "TESTSKU123",
+  "menu_order": 0,
+  "is_virtual": false,
+  "permalink": "http:\/\/ainsys.loc\/product\/test-product\/",
+  "total_sales": 0,
+  "price": "1",
+  "regular_price": "",
+  "sale_price": "",
+  "date_on_sale_from": null,
+  "date_on_sale_to": null,
+  "price_excluding_tax": 1,
+  "price_includes_tax": 1,
+  "taxable": false,
+  "tax_status": "taxable",
+  "tax_class": "",
+  "manage_stock": false,
+  "stock_qty": null,
+  "stock_status": "instock",
+  "backorders": "no",
+  "sold_individuality": true,
+  "availability": {
+    "availability": "",
+    "class": "in-stock"
+  },
+  "max_purchase_quantity": 1,
+  "min_purchase_quantity": 1,
+  "low_stock_amount": "",
+  "purchase_note": "My Notice",
+  "shipping_class_id": 0,
+  "shipping_class": "",
+  "weight": "100 &times; 100 &times; 100 cm",
+  "length": "100",
+  "width": "100",
+  "height": "100",
+  "upsell_ids": {
+    "0": 14157
+  },
+  "cross_sell_ids": {},
+  "related_products": {},
+  "variations_ids": {
+    "0": 18040,
+    "1": 18041,
+    "2": 18042
+  },
+  "category_ids": {
+    "0": 80,
+    "1": 79
+  },
+  "tag_ids": {
+    "0": 422
+  },
+  "default_attributes": {},
+  "attributes": {
+    "test": {
+      "id": 0,
+      "name": "\u0422\u0435\u0441\u0442",
+      "position": 0,
+      "visible": true,
+      "variation": true,
+      "options": {
+        "0": "1",
+        "1": "2",
+        "2": "3"
+      }
+    },
+      "pa_automatization-1": {
+      "id": 29,
+      "name": "pa_automatization-1",
+      "position": 1,
+      "visible": true,
+      "variation": true,
+      "options": {
+        "0": 425
+      }
+    }
+  },
+  "image": {
+    "id": "17954",
+    "alt": "",
+    "caption": "",
+    "description": "",
+    "href": "http:\/\/ainsys.loc\/blog\/2022\/12\/20\/serverless-workflow\/1200-675-twitter-linkedin-post-30\/",
+    "src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/1200-675-twitter-linkedin-post-30.png",
+    "title": "1200 - 675 - twitter linkedin post (30)"
+  },
+  "gallery_images_ids": {
+    "0": {
+      "id": 17954,
+      "alt": "",
+      "caption": "",
+      "description": "",
+      "href": "http:\/\/ainsys.loc\/blog\/2022\/12\/20\/serverless-workflow\/1200-675-twitter-linkedin-post-30\/",
+      "src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/1200-675-twitter-linkedin-post-30.png",
+      "title": "1200 - 675 - twitter linkedin post (30)"
+    },
+    "1": {
+      "id": 17906,
+      "alt": "",
+      "caption": "",
+      "description": "",
+      "href": "http:\/\/ainsys.loc\/blog\/2022\/12\/13\/repeat-sales\/frame-55-1\/",
+      "src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/frame-55-1.png",
+      "title": "Frame 55 (1)"
+    },
+    "2": {
+      "id": 17905,
+      "alt": "",
+      "caption": "",
+      "description": "",
+      "href": "http:\/\/ainsys.loc\/blog\/2022\/12\/13\/repeat-sales\/1200-675-twitter-linkedin-post-29-1\/",
+      "src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/1200-675-twitter-linkedin-post-29-1.png",
+      "title": "1200 - 675 - twitter linkedin post (29) (1)"
+    },
+    "3": {
+      "id": 17886,
+      "alt": "",
+      "caption": "",
+      "description": "",
+      "href": "http:\/\/ainsys.loc\/blog\/2022\/11\/17\/workflow-automation-business-projects\/1080-1080-facebook-linkedin-instagram\/",
+      "src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/11\/1080-1080-facebook-linkedin-instagram.png",
+      "title": "1080 - 1080 - facebook - linkedin - instagram"
+    }
+  },
+  "reviews_allowed": false,
+  "rating_counts": {},
+  "average_rating": "0",
+  "review_count": 0,
+  "variations": {
+    "0": {
+      "attributes": {
+        "attribute_test": "1",
+        "attribute_pa_automatization-1": "95"
+      },
+      "availability_html": "",
+      "backorders_allowed": false,
+      "dimensions": {
+        "length": "120",
+        "width": "120",
+        "height": "90"
+      },
+      "dimensions_html": "120 &times; 120 &times; 90 cm",
+      "display_price": 80,
+      "display_regular_price": 80,
+      "image": {
+        "title": "1200 - 675 - twitter linkedin post (25) (1)",
+        "caption": "",
+        "url": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/10\/1200-675-twitter-linkedin-post-25-1.png",
+        "alt": "",
+        "src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/10\/1200-675-twitter-linkedin-post-25-1.png",
+        "srcset": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/10\/1200-675-twitter-linkedin-post-25-1.png 1146w, http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/10\/1200-675-twitter-linkedin-post-25-1-300x169.png 300w, http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/10\/1200-675-twitter-linkedin-post-25-1-1024x577.png 1024w",
+        "sizes": "(max-width: 600px) 100vw, 600px",
+        "full_src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/10\/1200-675-twitter-linkedin-post-25-1.png",
+        "full_src_w": 1146,
+        "full_src_h": 646,
+        "gallery_thumbnail_src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/10\/1200-675-twitter-linkedin-post-25-1-150x150.png",
+        "gallery_thumbnail_src_w": 100,
+        "gallery_thumbnail_src_h": 100,
+        "thumb_src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/10\/1200-675-twitter-linkedin-post-25-1-300x300.png",
+        "thumb_src_w": 300,
+        "thumb_src_h": 300,
+        "src_w": 600,
+        "src_h": 338
+      },
+      "image_id": 17206,
+      "is_downloadable": false,
+      "is_in_stock": true,
+      "is_purchasable": true,
+      "is_sold_individually": "yes",
+      "is_virtual": false,
+      "max_qty": 1,
+      "min_qty": 1,
+      "price_html": "<span class=\"price\"><span class=\"woocommerce-Price-amount amount\"><bdi>80<span class=\"woocommerce-Price-currencySymbol\">&#36;<\/span><\/bdi><\/span><\/span>",
+      "sku": "TESTSKU123V1",
+      "variation_description": "<p>My Variation Description<\/p>\n",
+      "variation_id": 18040, // add "ID" element
+      "variation_is_active": true,
+      "variation_is_visible": true,
+      "weight": "3",
+      "weight_html": "3 kg"
+    },
+    "1": {
+      "attributes": {
+        "attribute_test": "2",
+        "attribute_pa_automatization-1": "95"
+      },
+      "availability_html": "",
+      "backorders_allowed": false,
+      "dimensions": {
+        "length": "100",
+        "width": "100",
+        "height": "100"
+      },
+      "dimensions_html": "100 &times; 100 &times; 100 cm",
+      "display_price": 95,
+      "display_regular_price": 110,
+      "image": {
+        "title": "systems_steps",
+        "caption": "",
+        "url": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/systems_steps.png",
+        "alt": "",
+        "src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/systems_steps.png",
+        "srcset": false,
+        "sizes": "(max-width: 219px) 100vw, 219px",
+        "full_src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/systems_steps.png",
+        "full_src_w": 219,
+        "full_src_h": 37,
+        "gallery_thumbnail_src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/systems_steps-150x37.png",
+        "gallery_thumbnail_src_w": 100,
+        "gallery_thumbnail_src_h": 25,
+        "thumb_src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/systems_steps.png",
+        "thumb_src_w": 219,
+        "thumb_src_h": 37,
+        "src_w": 219,
+        "src_h": 37
+      },
+      "image_id": 17847,
+      "is_downloadable": true,
+      "is_in_stock": true,
+      "is_purchasable": true,
+      "is_sold_individually": "yes",
+      "is_virtual": false,
+      "max_qty": 1,
+      "min_qty": 1,
+      "price_html": "<span class=\"price\"><del aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\"><bdi>110<span class=\"woocommerce-Price-currencySymbol\">&#36;<\/span><\/bdi><\/span><\/del> <ins><span class=\"woocommerce-Price-amount amount\"><bdi>95<span class=\"woocommerce-Price-currencySymbol\">&#36;<\/span><\/bdi><\/span><\/ins><\/span>",
+      "sku": "TESTSKU123V2",
+      "variation_description": "",
+      "variation_id": 18041,
+      "variation_is_active": true,
+      "variation_is_visible": true,
+      "weight": "1",
+      "weight_html": "1 kg",
+      "downloads": {
+        "0": {
+          "id": "8362feb4-f244-43ad-b091-3d28f849df73",
+          "name": "Variation File 1",
+          "file": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/bg_custom.png",
+          "enabled": true
+        },
+        "1": {
+          "id": "d7cee2c9-c5ea-4071-88fc-73111d0dded3",
+          "name": "Variation File 2",
+          "file": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/custom1-2.png",
+          "enabled": true
+        }
+      },
+      "download_expiry": -1,
+      "download_limit": 10
+    },
+    "2": {
+      "attributes": {
+        "attribute_test": "3",
+        "attribute_pa_automatization-1": "95"
+      },
+      "availability_html": "",
+      "backorders_allowed": false,
+      "dimensions": {
+        "length": "100",
+        "width": "100",
+        "height": "100"
+      },
+      "dimensions_html": "100 &times; 100 &times; 100 cm",
+      "display_price": 130,
+      "display_regular_price": 150,
+      "image": {
+        "title": "1200 - 675 - twitter linkedin post (28) (1)",
+        "caption": "",
+        "url": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/1200-675-twitter-linkedin-post-28-1.png",
+        "alt": "",
+        "src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/1200-675-twitter-linkedin-post-28-1.png",
+        "srcset": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/1200-675-twitter-linkedin-post-28-1.png 1146w, http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/1200-675-twitter-linkedin-post-28-1-300x169.png 300w, http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/1200-675-twitter-linkedin-post-28-1-1024x576.png 1024w",
+        "sizes": "(max-width: 600px) 100vw, 600px",
+        "full_src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/1200-675-twitter-linkedin-post-28-1.png",
+        "full_src_w": 1146,
+        "full_src_h": 645,
+        "gallery_thumbnail_src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/1200-675-twitter-linkedin-post-28-1-150x150.png",
+        "gallery_thumbnail_src_w": 100,
+        "gallery_thumbnail_src_h": 100,
+        "thumb_src": "http:\/\/ainsys.loc\/wp-content\/uploads\/2022\/12\/1200-675-twitter-linkedin-post-28-1-300x300.png",
+        "thumb_src_w": 300,
+        "thumb_src_h": 300,
+        "src_w": 600,
+        "src_h": 338
+      },
+      "image_id": 17614,
+      "is_downloadable": false,
+      "is_in_stock": true,
+      "is_purchasable": true,
+      "is_sold_individually": "yes",
+      "is_virtual": true,
+      "max_qty": 1,
+      "min_qty": 1,
+      "price_html": "<span class=\"price\"><del aria-hidden=\"true\"><span class=\"woocommerce-Price-amount amount\"><bdi>150<span class=\"woocommerce-Price-currencySymbol\">&#36;<\/span><\/bdi><\/span><\/del> <ins><span class=\"woocommerce-Price-amount amount\"><bdi>130<span class=\"woocommerce-Price-currencySymbol\">&#36;<\/span><\/bdi><\/span><\/ins><\/span>",
+      "sku": "TESTSKU123V3",
+      "variation_description": "<p>My Virtual product<\/p>\n",
+      "variation_id": 18042,
+      "variation_is_active": true,
+      "variation_is_visible": true,
+      "weight": "1",
+      "weight_html": "1 kg"
+    }
+  }
+}

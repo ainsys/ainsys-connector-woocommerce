@@ -7,13 +7,13 @@ use Ainsys\Connector\Master\Logger;
 use Ainsys\Connector\Master\Settings\Settings;
 use Ainsys\Connector\Master\WP\Process;
 use Ainsys\Connector\Master\Conditions;
+use Ainsys\Connector\Woocommerce\Helper;
 use Ainsys\Connector\Woocommerce\Prepare_Product_Data;
 use Ainsys\Connector\Woocommerce\Prepare_Product_Variation_Data;
 
 class Process_Products extends Process implements Hooked {
 
 	protected static string $entity = 'product';
-
 
 	/**
 	 * Initializes WordPress hooks for plugin/components.
@@ -46,7 +46,7 @@ class Process_Products extends Process implements Hooked {
 	 *
 	 * @return void
 	 */
-	public function process_delete( int $post_id, $post ): void {
+	public function process_delete( int $product_id, $post ): void {
 
 		self::$action = 'DELETE';
 
@@ -56,11 +56,11 @@ class Process_Products extends Process implements Hooked {
 
 		$fields = apply_filters(
 			'ainsys_process_delete_fields_' . self::$entity,
-			$this->prepare_data( $post_id ),
-			$post_id
+			$this->prepare_data( $product_id ),
+			$product_id
 		);
 
-		$this->send_data( $post_id, self::$entity, self::$action, $fields );
+		$this->send_data( $product_id, self::$entity, self::$action, $fields );
 
 	}
 
@@ -79,15 +79,9 @@ class Process_Products extends Process implements Hooked {
 			return;
 		}
 
-		$product = new \WC_Product($product_id);
-
-		if(!$product){
-			return;
-		}
-
 		$fields = apply_filters(
 			'ainsys_process_create_fields_' . self::$entity,
-			$this->prepare_data( $product_id ),
+			$this->prepare_data($product_id),
 			$product_id
 		);
 
@@ -223,23 +217,11 @@ class Process_Products extends Process implements Hooked {
 			return [];
 		}
 
-		$product = wc_get_product($product_id);
-		$prepare = new Prepare_Product_Data($product);
-		$data = $prepare->prepare_data();
-
-		if($product->is_type('variable')){
-
-			$variations = new Prepare_Product_Variation_Data($product);
-			$data['variations'] = $variations->prepare_data();
-
-		}
-
 		$fields = apply_filters(
 			'ainsys_process_update_fields_' . self::$entity,
-			$data,
+			$this->prepare_data($product_id),
 			$product_id
 		);
-
 
 		return $this->send_data( $product_id, self::$entity, self::$action, $fields );
 	}
@@ -269,7 +251,7 @@ class Process_Products extends Process implements Hooked {
 
 		$fields = apply_filters(
 			'ainsys_process_update_fields_' . self::$entity,
-			new Prepare_Product_Data($product_id),
+			$this->prepare_data($product_id),
 			$product_id
 		);
 
@@ -277,81 +259,39 @@ class Process_Products extends Process implements Hooked {
 	}
 
 	/**
-	 * Function for `add_attachment` action-hook.
+	 * @param $product_id
 	 *
-	 * @param int $product_id Product_ID.
-	 * @param      $product
-	 *
-	 * @return array
+	 * @return array|mixed|void
+	 * Prepare product data, for send to AINSYS
 	 */
-	protected function prepare_data( int $product_id): array {
+	public function prepare_data($product_id){
 
-		if ( get_post_type( $product_id ) != self::$entity ) {
-			return [];
+		$data = [];
+
+		$product = wc_get_product($product_id);
+
+		if(!$product){
+			return $data;
 		}
 
-		$product = new \WC_Product($product_id);
+		$prepare = new Prepare_Product_Data($product);
+		$data = $prepare->prepare_data();
 
-		return array(
-			'title'              => $product->get_name(),
-			'id'                 => $product->get_id(),
-			'created_at'         => (array) $product->get_date_created(),
-			'updated_at'         => (array) $product->get_date_modified(),
-			'type'               => $product->get_type(),
-			'status'             => $product->get_status(),
-			'downloadable'       => $product->is_downloadable(),
-			'virtual'            => $product->is_virtual(),
-			'permalink'          => $product->get_permalink(),
-			'sku'                => $product->get_sku(),
-			'price'              => wc_format_decimal( $product->get_price(), 2 ),
-			'regular_price'      => wc_format_decimal( $product->get_regular_price(), 2 ),
-			'sale_price'         => $product->get_sale_price() ? wc_format_decimal( $product->get_sale_price(), 2 ) : null,
-			'price_html'         => $product->get_price_html(),
-			'taxable'            => $product->is_taxable(),
-			'tax_status'         => $product->get_tax_status(),
-			'tax_class'          => $product->get_tax_class(),
-			'managing_stock'     => $product->managing_stock(),
-			'stock_quantity'     => $product->get_stock_quantity(),
-			'in_stock'           => $product->is_in_stock(),
-			'backorders_allowed' => $product->backorders_allowed(),
-			'backordered'        => $product->is_on_backorder(),
-			'sold_individually'  => $product->is_sold_individually(),
-			'purchaseable'       => $product->is_purchasable(),
-			'featured'           => $product->is_featured(),
-			'visible'            => $product->is_visible(),
-			'catalog_visibility' => $product->get_catalog_visibility(),
-			'on_sale'            => $product->is_on_sale(),
-			'weight'             => $product->get_weight() ? wc_format_decimal( $product->get_weight(), 2 ) : null,
-			'dimensions'         => array(
-				'length' => $product->get_length(),
-				'width'  => $product->get_width(),
-				'height' => $product->get_height(),
-				'unit'   => get_option( 'woocommerce_dimension_unit' ),
-			),
-			'shipping_required'  => $product->needs_shipping(),
-			'shipping_taxable'   => $product->is_shipping_taxable(),
-			'shipping_class'     => $product->get_shipping_class(),
-			'shipping_class_id'  => ( 0 !== $product->get_shipping_class_id() ) ? $product->get_shipping_class_id() : null,
-			'description'        => apply_filters( 'the_content', $product->get_description() ),
-			'short_description'  => apply_filters( 'woocommerce_short_description', $product->get_short_description() ),
-			'reviews_allowed'    => $product->get_reviews_allowed(),
-			'average_rating'     => wc_format_decimal( $product->get_average_rating(), 2 ),
-			'rating_count'       => $product->get_rating_count(),
-			'related_ids'        => array_map( 'absint', array_values( wc_get_related_products( $product->get_id() ) ) ),
-			'upsell_ids'         => array_map( 'absint', $product->get_upsell_ids() ),
-			'cross_sell_ids'     => array_map( 'absint', $product->get_cross_sell_ids() ),
-			'categories'         => wc_get_object_terms( $product->get_id(), 'product_cat', 'name' ),
-			'tags'               => wc_get_object_terms( $product->get_id(), 'product_tag', 'name' ),
-			//'images'             => $this->get_images( $product ),
-			'featured_src'       => wp_get_attachment_url( get_post_thumbnail_id( $product->get_id() ) ),
-			//'attributes'         => $this->get_attributes( $product ),
-			//'downloads'          => $this->get_downloads( $product ),
-			'download_limit'     => $product->get_download_limit(),
-			'download_expiry'    => $product->get_download_expiry(),
-			//'download_type'      => 'standard',
-			//'purchase_note'      => apply_filters( 'the_content', $product->get_purchase_note() )
-			//'total_sales'        => $product->get_total_sales(),
-		);
+		if($product->is_type('variable')){
+			$variations = new Prepare_Product_Variation_Data($product);
+			$data['variations'] = $variations->prepare_data();
+		}
+
+		$helper = new Helper();
+		var_dump($helper->check_image_exist('http://ainsys.loc/wp-content/uploads/2022/12/1200-675-twitter-linkedin-post-30.png'));
+
+		/*$file = plugin_dir_path(__FILE__) . 'test-simple.json';
+		
+		if(file_exists($file)){
+			file_put_contents($file, json_encode($data, JSON_FORCE_OBJECT));
+		}*/
+
+		return $data;
 
 	}
 

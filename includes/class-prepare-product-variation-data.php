@@ -47,6 +47,7 @@ class Prepare_Product_Variation_Data extends Prepare_Product_Data {
 		$downloadable_info = $this->get_downloadable_info_for_variation($variation);
 
 		$data = array_merge($data, $downloadable_info);
+		$data['variation_id'] = $variation->get_id();
 
 		return $data;
 	}
