@@ -3,6 +3,7 @@
 namespace Ainsys\Connector\Woocommerce\Webhooks;
 
 use Ainsys\Connector\Master\Hooked;
+use Ainsys\Connector\Master\Logger;
 use Ainsys\Connector\Master\Webhook_Handler;
 
 class Handle_Product implements Hooked, Webhook_Handler {
@@ -32,8 +33,8 @@ class Handle_Product implements Hooked, Webhook_Handler {
 	public function handler( $action, $data, $object_id = 0 ) {
 
 		switch ( $action ) {
-			case 'add':
-				$product_id = wp_insert_post( [ 'post_type' => 'product', 'post_title' => $data['title'] ] );
+			case 'CREATE':
+				$product_id = wp_insert_post( [ 'post_type' => 'product', 'post_title' => $data['name'] ] );
 
 				return $this->update_product( $data, $product_id );
 			case 'update':
@@ -66,8 +67,8 @@ class Handle_Product implements Hooked, Webhook_Handler {
 		$product = new \WC_Product( $data["id"] );
 
 		// Title
-		if ( isset( $data['title'] ) ) {
-			wp_update_post( array( 'ID' => $product->get_id(), 'post_title' => $data['title'] ) );
+		if ( isset( $data['name'] ) ) {
+			wp_update_post( array( 'ID' => $product->get_id(), 'post_title' => $data['name'] ) );
 		}
 
 		// Title
@@ -76,8 +77,8 @@ class Handle_Product implements Hooked, Webhook_Handler {
 		}
 
 		// Virtual
-		if ( isset( $data['virtual'] ) ) {
-			$product->set_virtual( $data['virtual'] );
+		if ( isset( $data['is_virtual'] ) ) {
+			$product->set_virtual( $data['is_virtual'] );
 		}
 
 		// Tax status

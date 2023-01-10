@@ -102,6 +102,7 @@ class Prepare_Product_Data {
 		$data = array_merge( $data, $this->get_metadata_info() );
 
 		return apply_filters( 'prepared_data_before_send_to_ainsys', $data, $this->product );
+
 	}
 
 	public function setup_external_info(){
@@ -134,10 +135,24 @@ class Prepare_Product_Data {
 
 	public function get_images_info() {
 
-		return [
-			'image_id'           => $this->product->get_image_id(),
-			'gallery_images_ids' => $this->product->get_gallery_image_ids(),
+		$data = [
+			'image' => $this->setup_image_data_by_id(
+				$this->product->get_image_id()
+			),
+			'gallery_images_ids' => []
 		];
+
+		if($this->product->get_gallery_image_ids()){
+
+			foreach($this->product->get_gallery_image_ids() as $id){
+
+				$data['gallery_images_ids'][] = $this->setup_image_data_by_id($id);
+
+			}
+
+		}
+
+		return $data;
 
 	}
 
@@ -258,7 +273,7 @@ class Prepare_Product_Data {
 			'purchase_note'     => $this->product->get_purchase_note(),
 			'shipping_class_id' => $this->product->get_shipping_class_id(),
 			'shipping_class'    => $this->product->get_shipping_class(),
-			'weight'            => $this->product->get_dimensions(),
+			'weight'            => $this->product->get_weight(),
 			'length'            => $this->product->get_length(),
 			'width'             => $this->product->get_width(),
 			'height'            => $this->product->get_height(),
@@ -329,6 +344,31 @@ class Prepare_Product_Data {
 			'price_includes_tax'  => wc_get_price_including_tax( $this->product )
 		];
 
+	}
+
+	protected function setup_image_data_by_id($id){
+
+		if(empty($id)){
+			return [];
+		}
+
+		$image = get_post($id);
+
+		if(!$image){
+			return [];
+		}
+
+		$image_data = [
+			'id' => $id,
+			'alt' => get_post_meta( $image->ID, '_wp_attachment_image_alt', true ),
+			'caption' => $image->post_excerpt,
+			'description' => $image->post_content,
+			'href' => get_permalink( $image->ID ),
+			'src' => $image->guid,
+			'title' => $image->post_title
+		];
+
+		return $image_data;
 	}
 
 }
