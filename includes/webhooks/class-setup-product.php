@@ -15,36 +15,6 @@ class Setup_Product {
 
 	public function __construct ( $product, $data, $action ) {
 
-		if ( empty( $action ) ) {
-			Logger::save(
-				[
-					'object_id'       => 0,
-					'entity'          => 'product',
-					'request_action'  => $action,
-					'request_type'    => 'incoming',
-					'request_data'    => serialize( __( 'Error: Action is empty', AINSYS_CONNECTOR_TEXTDOMAIN ) ),
-					'server_response' => serialize( __( 'Error: Action is empty', AINSYS_CONNECTOR_TEXTDOMAIN ) ),
-					'error'           => 1,
-				]
-			);
-		}
-
-		if ( empty( $data ) || ! is_array( $data ) ) {
-
-			Logger::save(
-				[
-					'object_id'       => 0,
-					'entity'          => 'product',
-					'request_action'  => $action,
-					'request_type'    => 'incoming',
-					'request_data'    => serialize( __( 'Error: Data is empty', AINSYS_CONNECTOR_TEXTDOMAIN ) ),
-					'server_response' => serialize( __( 'Error: Data is empty', AINSYS_CONNECTOR_TEXTDOMAIN ) ),
-					'error'           => 1,
-				]
-			);
-
-		}
-
 		$this->data       = $data;
 		$this->product_id = intval( $data['id'] );
 		$this->product    = $product;
@@ -63,6 +33,8 @@ class Setup_Product {
 		$this->set_images_info();
 		$this->set_downloadable_info();
 
+		$this->product->save();
+
 	}
 
 	public function set_downloadable_info(){
@@ -77,15 +49,22 @@ class Setup_Product {
 
 				$downloads = [];
 
+				/**
+				 * Unset downloads
+				 */
+				$this->product->set_downloads([]);
+
 				foreach($this->data['downloads'] as $download){
 
 					if(!is_array($download)){
 						continue;
 					}
 
-//					$downloads[] = $this->create_download($download);
+					$downloads[] = $this->create_download($download);
 
 				}
+
+				$this->product->set_downloads($downloads);
 
 			}
 
@@ -95,11 +74,26 @@ class Setup_Product {
 
 	protected function create_download($data){
 
-		$download = new WC_Product_Download();
+		$download = new \WC_Product_Download();
+
+		if($this->helper->check_image_exist($data['file'])){
+			$attachment_id = attachment_url_to_postid($data['file']);
+		}else{
+			$attachment_id = $this->helper->upload_image_to_library($data['file']);
+		}
+
+		if(!$attachment_id){
+			return false;
+		}
+
 		$file_url = wp_get_attachment_url( $attachment_id ); // attachmend ID should be here
-		$download->set_name( 'wizard-hat-illustration' );
+
+		$download->set_name( $data['name'] );
 		$download->set_id( md5( $file_url ) );
 		$download->set_file( $file_url );
+		$download->set_enabled( $data['enabled'] );
+
+		return $download;
 
 	}
 

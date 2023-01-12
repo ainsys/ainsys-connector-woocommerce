@@ -1,0 +1,52 @@
+node_modules/
+.idea/
+.tmb/
+.well-known/
+.wp-cli/
+cgi-bin/
+public/
+test/
+tmp/
+
+
+
+### Development Themes ###
+/node_modules/
+
+### Inner GIT repository files ###
+# git shouldn't add child repos .git directories but just to make sure.
+.git
+.git/*
+
+
+### IDEs ###
+.idea
+.vscode
+
+
+# These are some examples of commonly ignored file patterns.
+# You should customize this list as applicable to your project.
+# Learn more about .gitignore:
+#     https://www.atlassian.com/git/tutorials/saving-changes/gitignore
+
+# Node artifact files
+dist/
+
+# Compiled Java class files
+*.class
+
+# Compiled Python bytecode
+*.py[cod]
+
+# Log files
+
+# Package files
+*.jar
+
+# Maven
+target/
+
+# JetBrains IDE
+
+# Unit test reports
+TEST*.xml

@@ -3,6 +3,7 @@ namespace Ainsys\Connector\Woocommerce\Webhooks;
 
 use Ainsys\Connector\Master\Conditions;
 use Ainsys\Connector\Master\Hooked;
+use Ainsys\Connector\Master\Logger;
 use Ainsys\Connector\Master\Webhook_Handler;
 use Ainsys\Connector\Master\Webhooks\Handle;
 
@@ -51,10 +52,6 @@ class Handle_Product_2 extends Handle implements Hooked, Webhook_Handler {
 
 		if(!is_object($product)){
 			return sprintf( __( 'Error: %s creation is failed.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity );
-		}
-
-		if(is_object($new_product)){
-			$new_product->save();
 		}
 
 		return [
