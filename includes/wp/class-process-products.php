@@ -282,9 +282,6 @@ class Process_Products extends Process implements Hooked {
 			$data['variations'] = $variations->prepare_data();
 		}
 
-		$helper = new Helper();
-		var_dump($helper->check_image_exist('http://ainsys.loc/wp-content/uploads/2022/12/1200-675-twitter-linkedin-post-30.png'));
-
 		/*$file = plugin_dir_path(__FILE__) . 'test-simple.json';
 		
 		if(file_exists($file)){
