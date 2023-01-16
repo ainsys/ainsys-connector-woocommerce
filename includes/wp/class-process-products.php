@@ -32,7 +32,7 @@ class Process_Products extends Process implements Hooked {
 		} );
 		add_filter( 'ainsys_check_connection_request', [ $this, 'check_product_entity' ], 15, 3 );
 
-		add_action( 'woocommerce_new_product', 'on_product_save', 10, 1 );
+		add_action( 'woocommerce_new_product', [$this, 'process_create'], 10, 1 );
 		add_action( 'save_post_product', [ $this, 'process_update' ], 10, 4 );
 		add_action( 'deleted_post', [ $this, 'process_delete' ], 10, 2 );
 

@@ -16,3 +16,15 @@
 - Change Old Structure
 
 ### Fixed
+
+## [4.2.0] - 2023-01-17
+
+### Added
+
+- Add New methods to Product CRUD functionality
+
+### Changed
+
+- Change Structure classes to prepare data
+
+### Fixed

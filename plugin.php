@@ -11,7 +11,7 @@ namespace Ainsys\Connector\Woocommerce;
  * Plugin Name:       AINSYS connector Woocommerce Integration
  * Plugin URI: https://app.ainsys.com/
  * Description: AINSYS connector Woocommerce integration.
- * Version:           4.1.0
+ * Version:           4.2.0
  * Author:            AINSYS
  * Author URI:        https://app.ainsys.com/
  * License: GPLv2 or later
