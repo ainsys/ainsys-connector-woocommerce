@@ -20,7 +20,6 @@ class Setup_Product {
 	}
 
 	public function setup_product() {
-		var_dump( 'start' );
 		$this->set_general_info();
 		$this->set_price_info();
 		$this->set_taxes_info();
@@ -30,7 +29,6 @@ class Setup_Product {
 		$this->set_images_info();
 		$this->set_downloadable_info();
 		$this->setup_taxonomies();
-		var_dump( 'end' );
 	}
 
 	public function setup_taxonomies() {
@@ -48,6 +46,12 @@ class Setup_Product {
 			$attributes = $this->setup_attributes( $this->data['attributes'] );
 
 			$this->product->set_attributes( $attributes );
+		}
+
+		if ( $this->data['type'] === 'variable' ) {
+			$this->product->set_default_attributes(
+				$this->data['default_attributes']
+			);
 		}
 	}
 
@@ -100,6 +104,23 @@ class Setup_Product {
 	}
 
 	/**
+	 * @return array
+	 * Format Values to Term Ids for setup default attributes
+	 */
+	protected function format_default_attributes() {
+		$default_attributes = [];
+
+		foreach ( $this->data['default_attributes'] as $default_attribute_key => $default_attribute ) {
+			$default_attributes[ str_replace( 'pa_', '', $default_attribute_key ) ] = Helper::format_terms_name_to_ids(
+				[ $default_attribute ],
+				$default_attribute_key,
+				'slug' )[0];
+		}
+
+		return $default_attributes;
+	}
+
+	/**
 	 * @param $attributes
 	 *
 	 * @return array
@@ -127,7 +148,7 @@ class Setup_Product {
 
 				$new_attribute->set_name( $attribute['name'] );
 
-				$options = $this->helper->format_terms_name_to_ids( $attribute['options'], $attr_key );
+				$options = Helper::format_terms_name_to_ids( $attribute['options'], $attr_key );
 
 				$new_attribute->set_options( $options );
 			} else {
@@ -151,8 +172,8 @@ class Setup_Product {
 		}
 
 		$this->product->set_downloadable( $this->data['downloadable'] );
-		$this->product->set_download_limit($this->data['download_limit']); // int \ if -1 = unlimited
-		$this->product->set_download_expiry($this->data['download_expiry']);
+		$this->product->set_download_limit( $this->data['download_limit'] ); // int \ if -1 = unlimited
+		$this->product->set_download_expiry( $this->data['download_expiry'] );
 
 		if ( $this->data['downloadable'] === true &&
 		     isset( $this->data['downloads'] ) ) {
@@ -178,10 +199,10 @@ class Setup_Product {
 	protected function create_download( $data ) {
 		$download = new \WC_Product_Download();
 
-		if ( $this->helper->check_image_exist( $data['file'] ) ) {
+		if ( Helper::check_image_exist( $data['file'] ) ) {
 			$attachment_id = attachment_url_to_postid( $data['file'] );
 		} else {
-			$attachment_id = $this->helper->upload_image_to_library( $data );
+			$attachment_id = Helper::upload_image_to_library( $data );
 		}
 
 		if ( ! $attachment_id ) {
@@ -230,11 +251,11 @@ class Setup_Product {
 	 * @return false|int|string|\WP_Error
 	 */
 	protected function setup_image( array $image ) {
-		if ( $this->helper->check_image_exist( $image['src'] ) ) {
+		if ( Helper::check_image_exist( $image['src'] ) ) {
 			$image_id = $image['id'];
-			$this->helper->update_image_metadata( $image );
+			Helper::update_image_metadata( $image );
 		} else {
-			$image_id = $this->helper->upload_image_to_library( $this->data['image'] );
+			$image_id = Helper::upload_image_to_library( $this->data['image'] );
 		}
 
 		return $image_id;
@@ -254,7 +275,6 @@ class Setup_Product {
 	}
 
 	public function set_shipping_info() {
-
 		$this->product->set_purchase_note( $this->data['purchase_note'] );
 
 		/**
@@ -269,7 +289,7 @@ class Setup_Product {
 
 	public function set_stock_info() {
 		$this->product->set_manage_stock( $this->data['manage_stock'] ); // Set Product Manage Stock Status (bool)
-		$this->product->get_stock_quantity( $this->data['stock_qty'] );
+		$this->product->set_stock_quantity( $this->data['stock_qty'] );
 		$this->product->set_stock_status( $this->data['stock_status'] );
 		$this->product->set_backorders( $this->data['backorders'] );
 		$this->product->set_sold_individually( $this->data['sold_individuality'] );
@@ -300,8 +320,8 @@ class Setup_Product {
 		$this->product->set_catalog_visibility( $this->data['catalog_visibility'] ); // Set Catalog visibility
 		$this->product->set_description( $this->data['description'] ); // Set Description
 		$this->product->set_short_description( $this->data['short_description'] ); // Set Short Description
-		$this->product->set_sku( $this->data['sku'] ); // Set Product SKU
-//		$this->product->set_sku( rand(1,9999999) ); // Set Product SKU
+//		$this->product->set_sku( $this->data['sku'] ); // Set Product SKU
+		$this->product->set_sku( rand( 1, 9999999 ) ); // Set Product SKU
 		$this->product->set_menu_order( $this->data['menu_order'] ); // Set Product menu order
 		$this->product->set_virtual( $this->data['is_virtual'] ); // Set Virtual Status
 

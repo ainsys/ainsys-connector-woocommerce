@@ -28,3 +28,14 @@
 - Change Structure classes to prepare data
 
 ### Fixed
+
+## [4.3.0] - 2023-01-18
+
+### Added
+
+- Code Review
+- Add New Methods to CRUD functionality
+
+### Changed
+
+### Fixed

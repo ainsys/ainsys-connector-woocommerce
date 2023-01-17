@@ -3,11 +3,8 @@
 namespace Ainsys\Connector\Woocommerce\WP;
 
 use Ainsys\Connector\Master\Hooked;
-use Ainsys\Connector\Master\Logger;
-use Ainsys\Connector\Master\Settings\Settings;
 use Ainsys\Connector\Master\WP\Process;
 use Ainsys\Connector\Master\Conditions;
-use Ainsys\Connector\Woocommerce\Helper;
 use Ainsys\Connector\Woocommerce\Prepare_Product_Data;
 use Ainsys\Connector\Woocommerce\Prepare_Product_Variation_Data;
 
@@ -21,16 +18,6 @@ class Process_Products extends Process implements Hooked {
 	 * @return void
 	 */
 	public function init_hooks() {
-
-		add_filter( 'ainsys_get_entities_list', array( $this, 'add_product_entity_to_list' ), 10, 1 );
-
-		/**
-		 * Check entity connection for products
-		 */
-		add_filter( 'ainsys_before_check_connection_make_request', function () {
-			return true;
-		} );
-		add_filter( 'ainsys_check_connection_request', [ $this, 'check_product_entity' ], 15, 3 );
 
 		add_action( 'woocommerce_new_product', [$this, 'process_create'], 10, 1 );
 		add_action( 'save_post_product', [ $this, 'process_update' ], 10, 4 );
@@ -86,109 +73,6 @@ class Process_Products extends Process implements Hooked {
 		);
 
 		$this->send_data( $product_id, self::$entity, self::$action, $fields );
-
-	}
-
-	/**
-	 * @param $entities_list
-	 *
-	 * @return mixed
-	 */
-
-	public function add_product_entity_to_list($entities_list){
-
-		$entities_list['product'] = __( 'Product / fields', AINSYS_CONNECTOR_TEXTDOMAIN );
-
-		/*if ( function_exists( 'wc_coupons_enabled' ) ) {
-			if ( wc_coupons_enabled() ) {
-				$entities_list['coupons'] = __( 'Coupons / fields', AINSYS_CONNECTOR_TEXTDOMAIN );
-			}
-		}*/
-
-		return $entities_list;
-
-	}
-
-	/**
-	 * @param $result_entity
-	 * @param $entity
-	 * @param $make_request
-	 *
-	 * @return mixed
-	 * Check "product" entity filter callback
-	 */
-	public function check_product_entity( $result_entity, $entity, $make_request ) {
-
-		$result_test   = $this->get_product();
-		$result_entity = Settings::get_option( 'check_connection_entity' );
-		$result_entity = $this->get_result_entity( $result_test, $result_entity, $entity );
-
-		return $result_entity;
-
-	}
-
-	/**
-	 * @param array $result_test
-	 * @param $result_entity
-	 * @param $entity
-	 *
-	 * @return mixed
-	 */
-	protected function get_result_entity( array $result_test, $result_entity, $entity ) {
-
-		if ( ! empty( $result_test['request'] ) ) {
-			$result_request = $result_test['request'];
-		} else {
-			$result_request = 'Error: Data transfer is disabled. Check the Entities export settings tab';
-		}
-
-		if ( ! empty( $result_test['response'] ) ) {
-			$result_response = $result_test['response'];
-		} else {
-			$result_response = __( 'Error: Data transfer is disabled. Check the Entities export settings tab', AINSYS_CONNECTOR_TEXTDOMAIN );
-		}
-
-		$result_entity[ $entity ] = [
-			'request'        => $result_request,
-			'response'       => $result_response,
-			'short_request'  => mb_substr( Logger::convert_response( $result_request ), 0, 40 ) . ' ... ',
-			'full_request'   => Logger::convert_response( $result_request ),
-			'short_response' => mb_substr( Logger::convert_response( $result_response ), 0, 40 ) . ' ... ',
-			'full_response'  => Logger::convert_response( $result_response ),
-			'time'           => current_time( 'mysql' ),
-			'status'         => false === strpos( $result_response, 'Error:' ),
-		];
-
-		Settings::set_option( 'check_connection_entity', $result_entity );
-
-		return $result_entity;
-	}
-
-	/**
-	 * @return array|false
-	 *
-	 * Get product data for AINSYS
-	 *
-	 */
-
-	private function get_product() {
-
-		$args = array(
-			'limit' => 1,
-		);
-
-		$products = wc_get_products( $args );
-
-		if ( ! empty( $products ) ) {
-
-			$product    = end( $products );
-			$product_id = $product->get_id();
-
-			return $this->process_checking( $product_id, $product, true );
-
-		} else {
-			return false;
-		}
 
 	}
 

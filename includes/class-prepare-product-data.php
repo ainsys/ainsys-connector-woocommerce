@@ -26,7 +26,7 @@ class Prepare_Product_Data {
 			/**
 			 * Merge External Link info
 			 */
-			$data = array_merge( $data, $this->setup_external_info() );
+			$data = array_merge( $data, $this->get_external_info() );
 		}
 
 		if ( ! $this->product->is_type( 'grouped' ) ) {
@@ -96,7 +96,7 @@ class Prepare_Product_Data {
 		return apply_filters( 'ainsys_prepared_data_before_send', $data, $this->product );
 	}
 
-	public function setup_external_info() {
+	public function get_external_info() {
 		return [
 			'external_url'         => $this->product->get_product_url(),
 			'external_button_text' => $this->product->get_button_text()
@@ -120,7 +120,7 @@ class Prepare_Product_Data {
 
 	public function get_images_info() {
 		$data = [
-			'image'              => $this->setup_image_data_by_id(
+			'image'              => $this->get_image_data_by_id(
 				$this->product->get_image_id()
 			),
 			'gallery_images_ids' => []
@@ -128,7 +128,7 @@ class Prepare_Product_Data {
 
 		if ( $this->product->get_gallery_image_ids() ) {
 			foreach ( $this->product->get_gallery_image_ids() as $id ) {
-				$data['gallery_images_ids'][] = $this->setup_image_data_by_id( $id );
+				$data['gallery_images_ids'][] = $this->get_image_data_by_id( $id );
 			}
 		}
 
@@ -137,7 +137,7 @@ class Prepare_Product_Data {
 
 	public function get_downloadable_info() {
 		$data = [
-			'downloads'       => $this->setup_downloads(),
+			'downloads'       => $this->get_product_downloads(),
 			'download_expiry' => $this->product->get_download_expiry(),
 			'downloadable'    => $this->product->get_downloadable(),
 			'download_limit'  => $this->product->get_download_limit(),
@@ -151,7 +151,7 @@ class Prepare_Product_Data {
 	 *
 	 * @return array
 	 */
-	protected function setup_downloads( $product = '' ) {
+	protected function get_product_downloads( $product = '' ) {
 		if ( empty( $product ) ) {
 			$product = $this->product;
 		}
@@ -176,13 +176,13 @@ class Prepare_Product_Data {
 			'product_cat'        => get_the_terms( $this->product->get_id(), 'product_cat' ),
 			'tag_ids'            => get_the_terms( $this->product->get_id(), 'product_tag' ),
 			'default_attributes' => $this->product->get_default_attributes(),
-			'attributes'         => $this->setup_attributes_info()
+			'attributes'         => $this->get_attributes_info()
 		];
 
 		return $data;
 	}
 
-	protected function setup_attributes_info() {
+	protected function get_attributes_info() {
 		$attributes = [];
 
 		foreach ( $this->product->get_attributes() as $attr_key => $attribute ) {
@@ -304,7 +304,7 @@ class Prepare_Product_Data {
 		];
 	}
 
-	protected function setup_image_data_by_id( $id ) {
+	protected function get_image_data_by_id( $id ) {
 		if ( empty( $id ) ) {
 			return [];
 		}

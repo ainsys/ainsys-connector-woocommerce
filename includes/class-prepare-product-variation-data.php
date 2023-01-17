@@ -25,7 +25,7 @@ class Prepare_Product_Variation_Data extends Prepare_Product_Data {
 
 		$data = $this->variation->get_available_variations();
 
-		return apply_filters( 'prepared_product_variation_data_before_send_to_ainsys',
+		return apply_filters( 'ainsys_prepared_product_variation_data_before_send',
 		                      $data,
 		                      $this->product,
 		                      $this->variation );
@@ -56,7 +56,7 @@ class Prepare_Product_Variation_Data extends Prepare_Product_Data {
 		/**
 		 * Setup Images info
 		 */
-		$data['image'] = parent::setup_image_data_by_id( $variation->get_image_id() );
+		$data['image'] = parent::get_image_data_by_id( $variation->get_image_id() );
 
 		/**
 		 * Setup Variation Shipping Info
@@ -177,7 +177,7 @@ class Prepare_Product_Variation_Data extends Prepare_Product_Data {
 	public function get_downloadable_info_for_variation( $variation ) {
 		$data = [
 			'downloadable'    => $variation->get_downloadable(),
-			'downloads'       => $this->setup_downloads( $variation ),
+			'downloads'       => $this->get_product_downloads( $variation ),
 			'download_expiry' => $variation->get_download_expiry(),
 			'download_limit'  => $variation->get_download_limit(),
 		];

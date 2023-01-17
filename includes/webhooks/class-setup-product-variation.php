@@ -15,11 +15,16 @@ class Setup_Product_Variation extends Setup_Product {
 	}
 
 	public function setup_product_variation(){
-
+		var_dump('start variation');
 		/**
 		 * Add Variation to product
 		 */
 		$this->product->set_parent_id($this->parent_product->get_id());
+
+		/**
+		 * C
+		 */
+		$this->product->save();
 
 		/**
 		 * Setup variation general info
@@ -29,16 +34,8 @@ class Setup_Product_Variation extends Setup_Product {
 		/**
 		 * Setup variation attributes
 		 */
-		$atts = [];
-
-		foreach($this->data['attributes'] as $attribute_key => $attribute_value){
-
-			$atts[$attribute_key] = $attribute_value;
-
-		}
-
 		$this->product->set_attributes(
-			$atts
+			$this->data['attributes']
 		);
 
 		/**
@@ -74,11 +71,7 @@ class Setup_Product_Variation extends Setup_Product {
 		 */
 		parent::set_taxes_info();
 
-		/**
-		 * Save variation data
-		 */
-		$this->product->save();
-
+		var_dump('end variation');
 	}
 
 	private function setup_variation_general_info(){
@@ -86,7 +79,8 @@ class Setup_Product_Variation extends Setup_Product {
 		$this->product->set_virtual($this->data['is_virtual']);
 
 		if(!empty($this->data['sku'])){
-			$this->product->set_sku($this->data['sku']);
+			$this->product->set_sku('');
+//			$this->product->set_sku($this->data['sku']);
 		}
 
 		$this->product->set_description($this->data['variation_description']);

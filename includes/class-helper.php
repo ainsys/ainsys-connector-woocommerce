@@ -2,7 +2,20 @@
 
 namespace Ainsys\Connector\Woocommerce;
 
+use Ainsys\Connector\Master\Plugin_Common;
+
 class Helper {
+
+	use Plugin_Common;
+
+	/**
+	 * Checks if the woocommerce plugin is active.
+	 *
+	 * @return bool
+	 */
+	public function is_woocommerce_active() {
+		return $this->is_plugin_active( 'woocommerce/woocommerce.php' );
+	}
 
 	/**
 	 * @param $term
@@ -56,6 +69,7 @@ class Helper {
 	 * @return int|\WP_Error
 	 */
 	public function create_attribute_taxonomy( $attr_key, $attribute ) {
+
 		$name                 = str_replace( 'pa_', '', $attr_key );
 		$attribute_taxonomies = wc_get_attribute_taxonomies();
 
@@ -117,6 +131,7 @@ class Helper {
 	 * @param $attr_key
 	 *
 	 * @return bool
+	 * Check if Attribute taxonomy already exist
 	 */
 	public function attribute_taxonomy_exist( $attr_key ) {
 		$attributes = wc_get_attribute_taxonomies();
@@ -125,11 +140,22 @@ class Helper {
 		return in_array( str_replace( 'pa_', '', $attr_key ), $slugs );
 	}
 
-	public function format_terms_name_to_ids( $terms, $taxonomy ) {
+	/**
+	 * @param $terms
+	 * @param $taxonomy
+	 *
+	 * @return array
+	 * Format Attribute options to terms ids from values, becouse woocommerce use terms ids in attribute option parameters
+	 */
+	static function format_terms_name_to_ids( $terms, $taxonomy, $get_by = 'name' ) {
 		$terms_ids = [];
 
+		if(empty($terms) || !is_array($terms)){
+			return $terms_ids;
+		}
+
 		foreach ( $terms as $term_name ) {
-			$term = get_term_by( 'name', $term_name, $taxonomy );
+			$term = get_term_by( $get_by, $term_name, $taxonomy );
 
 			if ( is_object( $term ) && isset( $term->term_id ) ) {
 				$terms_ids[] = $term->term_id;
@@ -152,7 +178,7 @@ class Helper {
 	 *
 	 * Check by url if image exists in media library
 	 */
-	public function check_image_exist( $url ) {
+	static function check_image_exist( $url ) {
 		$dir = wp_upload_dir();
 
 		if ( false !== strpos( $url, $dir['baseurl'] . '/' ) ) { // Is URL in uploads directory?
@@ -189,7 +215,7 @@ class Helper {
 	 *
 	 * Upload images to Wordpress media gallery
 	 */
-	public function upload_image_to_library( $image ) {
+	static function upload_image_to_library( $image ) {
 		if ( ! is_array( $image ) ) {
 			return false;
 		}
@@ -245,7 +271,7 @@ class Helper {
 			wp_generate_attachment_metadata( $attachment_id, $sideload['file'] )
 		);
 
-		$update_meta = ( isset( $image['file'] ) ) ? $this->update_image_metadata( $image ) : false;
+		$update_meta = ( isset( $image['file'] ) ) ? Helper::update_image_metadata( $image ) : false;
 
 		return $attachment_id;
 	}
@@ -257,7 +283,7 @@ class Helper {
 	 *
 	 * Update image metadata
 	 */
-	public function update_image_metadata( array $image ) {
+	static function update_image_metadata( array $image ) {
 		if ( empty( $image ) || ! is_array( $image ) ) {
 			return false;
 		}

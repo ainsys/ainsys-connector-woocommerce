@@ -8,33 +8,20 @@ use Ainsys\Connector\Master\Hooked;
 use Ainsys\Connector\Master\Logger;
 use Ainsys\Connector\Master\Plugin_Common;
 use Ainsys\Connector\Master\Settings\Settings;
-use Ainsys\Connector\Master\Settings\Admin_UI;
-use Ainsys\Connector\Master\UTM_Handler;
+use Ainsys\Connector\Woocommerce\Settings\Admin_Ui_Product_Entity_Check;
 use Ainsys\Connector\Woocommerce\Webhooks\Handle_Order;
 use Ainsys\Connector\Woocommerce\Webhooks\Handle_Product;
-use Ainsys\Connector\Woocommerce\Webhooks\Handle_Product_2;
 use Ainsys\Connector\Woocommerce\WP\Process_Orders;
 use Ainsys\Connector\Woocommerce\WP\Process_Products;
-use Ainsys\Connector\Woocommerce\Prepare_Product_Variation_Data;
 
 class Plugin implements Hooked {
 
 	use Plugin_Common;
 
 	/**
-	 * @var Core
+	 * @var Helper
 	 */
-	private $core;
-
-	/**
-	 * @var Logger
-	 */
-	private $logger;
-
-	/**
-	 * @var UTM_Handler
-	 */
-	private $UTM_handler;
+	private $Helper;
 
 	/**
 	 * @var Settings
@@ -42,33 +29,26 @@ class Plugin implements Hooked {
 	private $settings;
 
 	/**
-	 * @var Admin_UI
-	 */
-	private $admin_ui;
-
-	/**
 	 * @var DI_Container;
 	 */
 	public $di_container;
 
 
-	public function __construct( Core $core, Logger $logger, UTM_Handler $UTM_handler, Settings $settings, Admin_UI $admin_ui ) {
-		$this->UTM_handler = $UTM_handler;
+	public function __construct( Settings $settings) {
 		$this->settings    = $settings;
-		$this->admin_ui    = $admin_ui;
+		$this->Helper      = new Helper();
 
 		$this->init_plugin_metadata();
 
 		$this->di_container = DI_Container::get_instance();
 
+		$this->components['check_product_entity'] = $this->di_container->resolve( Admin_Ui_Product_Entity_Check::class );
+		$this->components['woo_ui']               = $this->di_container->resolve( Woo_UI::class );
+		$this->components['product_webhook']      = $this->di_container->resolve( Handle_Product::class );
+		$this->components['order_webhook']        = $this->di_container->resolve( Handle_Order::class );
 
-//		$this->components['product_webhook'] = $this->di_container->resolve(Handle_Product::class);
-		$this->components['product_webhook'] = $this->di_container->resolve(Handle_Product_2::class);
-		$this->components['order_webhook'] = $this->di_container->resolve(Handle_Order::class);
-
-		$this->components['process_products'] = $this->di_container->resolve(Process_Products::class);
-		$this->components['process_orders'] = $this->di_container->resolve(Process_Orders::class);
-
+		$this->components['process_products'] = $this->di_container->resolve( Process_Products::class );
+		$this->components['process_orders']   = $this->di_container->resolve( Process_Orders::class );
 	}
 
 	/**
@@ -77,14 +57,16 @@ class Plugin implements Hooked {
 	 * @return void
 	 */
 	public function init_hooks() {
-
-		add_filter( 'ainsys_status_list', array( $this, 'add_status_of_component' ), 10, 1 );
-
-		if ( $this->is_woocommerce_active() ) {
-
-			add_action( 'woocommerce_checkout_order_processed', array( $this, 'new_order_processed' ) );
-			add_action( 'post_updated', array( $this, 'ainsys_update_order' ), 10, 4 );
-			add_action( 'woocommerce_order_status_changed', array( $this, 'send_order_status_update_to_ainsys' ) );
+		if ( $this->Helper->is_woocommerce_active() ) {
+			/**
+			 * NEED TO REMOVE _______________________
+			 */
+//			add_action( 'woocommerce_checkout_order_processed', array( $this, 'new_order_processed' ) );
+//			add_action( 'post_updated', array( $this, 'ainsys_update_order' ), 10, 4 );
+//			add_action( 'woocommerce_order_status_changed', array( $this, 'send_order_status_update_to_ainsys' ) );
+			/**
+			 * _________________________________________
+			 */
 
 			foreach ( $this->components as $component ) {
 				if ( $component instanceof Hooked ) {
@@ -92,54 +74,6 @@ class Plugin implements Hooked {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Generates a component status to show on the General tab of the master plugin settings.
-	 *
-	 * @return array
-	 */
-	public function add_status_of_component( $status_items = array() ) {
-
-		$status_items['woocommerce'] = array(
-			'title'  => __( 'WooCommerce', AINSYS_CONNECTOR_TEXTDOMAIN ),
-			'active' => $this->is_woocommerce_active(),
-		);
-
-		return $status_items;
-	}
-
-	/**
-	 * Checks if the woocommerce plugin is active.
-	 *
-	 * @return bool
-	 */
-	public function is_woocommerce_active() {
-		return $this->is_plugin_active( 'woocommerce/woocommerce.php' );
-	}
-
-	/**
-	 * Adds names of functions to get woocommerce entities to the getters array.
-	 *
-	 * @return array
-	 */
-	public function add_fields_getters_for_entities( $getters = array() ) {
-		$getters['product'] = array( $this, 'get_product_fields' );
-		$getters['order']   = array( $this, 'get_order_fields' );
-		$getters['coupons'] = array( $this, 'get_coupons_fields' );
-
-		return $getters;
-	}
-
-	/**
-	 * Adds woocommerce to the apis array.
-	 *
-	 * @return array
-	 */
-	public function add_default_api_for_entities_option( $default_apis ) {
-		$default_apis['woocommerce'] = '';
-
-		return $default_apis;
 	}
 
 	/**
@@ -153,9 +87,7 @@ class Plugin implements Hooked {
 	 * @return mixed
 	 */
 	public function ainsys_update_order( $order_id, $order_new, $order_old, $test = false ) {
-
 		if ( 'shop_order' === get_post_type( $order_id ) ) {
-
 			$request_action = 'UPDATE';
 
 			$fields = (array) $order_new;
@@ -176,7 +108,11 @@ class Plugin implements Hooked {
 				Core::send_error_email( $server_response );
 			}
 
-			Logger::save_log_information( $order_id, $request_action, serialize( $request_data ), serialize( $server_response ), 0 );
+			Logger::save_log_information( $order_id,
+			                              $request_action,
+			                              serialize( $request_data ),
+			                              serialize( $server_response ),
+			                              0 );
 
 			if ( $test ) {
 				$result = array(
@@ -246,7 +182,11 @@ class Plugin implements Hooked {
 			$this->core->send_error_email( $server_response );
 		}
 
-		$this->logger->save_log_information( $order_id, $request_action, serialize( $order_data ), serialize( $server_response ), 0 );
+		$this->logger->save_log_information( $order_id,
+		                                     $request_action,
+		                                     serialize( $order_data ),
+		                                     serialize( $server_response ),
+		                                     0 );
 
 		return true;
 	}
@@ -285,7 +225,7 @@ class Plugin implements Hooked {
 			$this->core->send_error_email( $server_response );
 		}
 
-		Logger::save([$order_id, $request_action, serialize( $order_data ), serialize( $server_response )]);
+		Logger::save( [ $order_id, $request_action, serialize( $order_data ), serialize( $server_response ) ] );
 
 		return;
 	}
@@ -352,7 +292,6 @@ class Plugin implements Hooked {
 	 * @return array
 	 */
 	private function prepare_fields( $data = array() ) {
-
 		$all_fields = WC()->checkout->get_checkout_fields();
 
 		$prepare_data = array();
@@ -390,7 +329,8 @@ class Plugin implements Hooked {
 		$coupons = WC()->cart->get_coupons();
 		if ( ! empty( $coupons ) ) {
 			foreach ( $coupons as $coupon ) {
-				$prepare_data[ 'coupon_' . $coupon->get_code() ] = wc_format_decimal( $coupon->get_amount(), 2 ) . ' ' . $coupon->get_discount_type();
+				$prepare_data[ 'coupon_' . $coupon->get_code() ] = wc_format_decimal( $coupon->get_amount(),
+				                                                                      2 ) . ' ' . $coupon->get_discount_type();
 			}
 		}
 
@@ -406,7 +346,9 @@ class Plugin implements Hooked {
 
 		/// search for custom fields
 		if ( ! empty( $all_fields['billing'] ) ) {
-			$prepare_data = array_merge( $prepare_data, $this->sanitize_aditional_order_fields( $all_fields['billing'], $data['id'] ) );
+			$prepare_data = array_merge( $prepare_data,
+			                             $this->sanitize_aditional_order_fields( $all_fields['billing'],
+			                                                                     $data['id'] ) );
 		}
 
 		//shipping
@@ -420,7 +362,9 @@ class Plugin implements Hooked {
 		}
 		/// search for custom fields
 		if ( ! empty( $all_fields['shipping'] ) ) {
-			$prepare_data = array_merge( $prepare_data, $this->sanitize_aditional_order_fields( $all_fields['shipping'], $data['id'] ) );
+			$prepare_data = array_merge( $prepare_data,
+			                             $this->sanitize_aditional_order_fields( $all_fields['shipping'],
+			                                                                     $data['id'] ) );
 		}
 
 		return $prepare_data;
@@ -490,81 +434,6 @@ class Plugin implements Hooked {
 		return $prepare_data;
 	}
 
-	/**
-	 * Prepares WC product fields
-	 *
-	 * @param object $product
-	 *
-	 * @return array
-	 */
-	private function prepare_single_product( $product ) {
-
-		if ( empty( $product ) ) {
-			return array();
-		}
-
-		return array(
-			'title'              => $product->get_name(),
-			'id'                 => $product->get_id(),
-			'created_at'         => (array) $product->get_date_created(),
-			'updated_at'         => (array) $product->get_date_modified(),
-			'type'               => $product->get_type(),
-			'status'             => $product->get_status(),
-			'downloadable'       => $product->is_downloadable(),
-			'virtual'            => $product->is_virtual(),
-			'permalink'          => $product->get_permalink(),
-			'sku'                => $product->get_sku(),
-			'price'              => wc_format_decimal( $product->get_price(), 2 ),
-			'regular_price'      => wc_format_decimal( $product->get_regular_price(), 2 ),
-			'sale_price'         => $product->get_sale_price() ? wc_format_decimal( $product->get_sale_price(), 2 ) : null,
-			'price_html'         => $product->get_price_html(),
-			'taxable'            => $product->is_taxable(),
-			'tax_status'         => $product->get_tax_status(),
-			'tax_class'          => $product->get_tax_class(),
-			'managing_stock'     => $product->managing_stock(),
-			'stock_quantity'     => $product->get_stock_quantity(),
-			'in_stock'           => $product->is_in_stock(),
-			'backorders_allowed' => $product->backorders_allowed(),
-			'backordered'        => $product->is_on_backorder(),
-			'sold_individually'  => $product->is_sold_individually(),
-			'purchaseable'       => $product->is_purchasable(),
-			'featured'           => $product->is_featured(),
-			'visible'            => $product->is_visible(),
-			'catalog_visibility' => $product->get_catalog_visibility(),
-			'on_sale'            => $product->is_on_sale(),
-			'weight'             => $product->get_weight() ? wc_format_decimal( $product->get_weight(), 2 ) : null,
-			'dimensions'         => array(
-				'length' => $product->get_length(),
-				'width'  => $product->get_width(),
-				'height' => $product->get_height(),
-				'unit'   => get_option( 'woocommerce_dimension_unit' ),
-			),
-			'shipping_required'  => $product->needs_shipping(),
-			'shipping_taxable'   => $product->is_shipping_taxable(),
-			'shipping_class'     => $product->get_shipping_class(),
-			'shipping_class_id'  => ( 0 !== $product->get_shipping_class_id() ) ? $product->get_shipping_class_id() : null,
-			'description'        => apply_filters( 'the_content', $product->get_description() ),
-			'short_description'  => apply_filters( 'woocommerce_short_description', $product->get_short_description() ),
-			'reviews_allowed'    => $product->get_reviews_allowed(),
-			'average_rating'     => wc_format_decimal( $product->get_average_rating(), 2 ),
-			'rating_count'       => $product->get_rating_count(),
-			'related_ids'        => array_map( 'absint', array_values( wc_get_related_products( $product->get_id() ) ) ),
-			'upsell_ids'         => array_map( 'absint', $product->get_upsell_ids() ),
-			'cross_sell_ids'     => array_map( 'absint', $product->get_cross_sell_ids() ),
-			'categories'         => wc_get_object_terms( $product->get_id(), 'product_cat', 'name' ),
-			'tags'               => wc_get_object_terms( $product->get_id(), 'product_tag', 'name' ),
-			//'images'             => $this->get_images( $product ),
-			'featured_src'       => wp_get_attachment_url( get_post_thumbnail_id( $product->get_id() ) ),
-//			'attributes'         => $product->get_attributes(),
-			//'downloads'          => $this->get_downloads( $product ),
-			'download_limit'     => $product->get_download_limit(),
-			'download_expiry'    => $product->get_download_expiry(),
-			//'download_type'      => 'standard',
-			//'purchase_note'      => apply_filters( 'the_content', $product->get_purchase_note() )
-			//'total_sales'        => $product->get_total_sales(),
-		);
-	}
-
 
 	/**
 	 * Sanitizes additional order fields from current order and saves them to the order entity
@@ -599,7 +468,11 @@ class Plugin implements Hooked {
 					$field_data_id = $wpdb->insert_id;
 
 					/// Save new field to log
-					$this->logger->save_log_information( $field_data_id, $field_name, 'order_cstom_field_saved', '', 0 );
+					$this->logger->save_log_information( $field_data_id,
+					                                     $field_name,
+					                                     'order_cstom_field_saved',
+					                                     '',
+					                                     0 );
 				} else {
 					$response = $wpdb->update(
 						$wpdb->prefix . $this->settings::$ainsys_entities_settings_table,
@@ -692,211 +565,6 @@ class Plugin implements Hooked {
 	}
 
 	/**
-	 * Generates fields for PRODUCT entity.
-	 *
-	 * @return array
-	 */
-	public function get_product_fields() {
-		return array(
-			'title'              => array(
-				'nice_name'   => __( 'Title', AINSYS_CONNECTOR_TEXTDOMAIN ),
-				'api'         => 'woocommerce',
-				'description' => 'Product title',
-			),
-			'id'                 => array(
-				'nice_name' => __( '{ID}', AINSYS_CONNECTOR_TEXTDOMAIN ),
-				'api'       => 'woocommerce',
-			),
-			'created_at'         => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'updated_at'         => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'type'               => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'status'             => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'downloadable'       => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'virtual'            => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'permalink'          => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'sku'                => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'price'              => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'regular_price'      => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'sale_price'         => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'price_html'         => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'taxable'            => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'tax_status'         => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'tax_class'          => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'managing_stock'     => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'stock_quantity'     => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'in_stock'           => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'backorders_allowed' => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'backordered'        => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'sold_individually'  => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'purchaseable'       => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'featured'           => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'visible'            => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'catalog_visibility' => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'on_sale'            => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'weight'             => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'dimensions'         => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'shipping_required'  => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'shipping_taxable'   => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'shipping_class'     => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'shipping_class_id'  => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'nice_name'          => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'short_nice_name'    => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'reviews_allowed'    => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'average_rating'     => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'rating_count'       => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'related_ids'        => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'upsell_ids'         => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'cross_sell_ids'     => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'categories'         => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'tags'               => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			//"images"
-			'featured_src'       => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			//"attributes"
-			//"downloads"
-			'download_limit'     => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			'download_expiry'    => array(
-				'nice_name' => '',
-				'api'       => 'woocommerce',
-			),
-			//"download_type"
-			//"purchase_note"
-			//"total_sales"
-		);
-	}
-
-	/**
 	 * Generates fields for ORDER entity
 	 *
 	 * @return array
@@ -961,7 +629,8 @@ class Plugin implements Hooked {
 			}
 		}
 
-		$order_saved_settings = $this->settings::get_saved_entity_settings_from_db( ' WHERE entity="order" AND setting_key="extra_field"', false );
+		$order_saved_settings = $this->settings::get_saved_entity_settings_from_db( ' WHERE entity="order" AND setting_key="extra_field"',
+		                                                                            false );
 		$order_extra_fields   = array();
 		if ( ! empty( $order_saved_settings ) ) {
 			foreach ( $order_saved_settings as $saved_setting ) {
