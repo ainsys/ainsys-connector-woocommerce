@@ -11,11 +11,14 @@ use Ainsys\Connector\Master\Settings\Admin_UI_Entities_Checking;
 class Admin_Ui_Product_Entity_Check implements Hooked {
 
 	protected $process;
+	protected $entities_checking;
+
 	static public $entity = 'product';
 
 	public function init_hooks() {
 
 		$this->process = new Process_Products();
+		$this->entities_checking = new Admin_UI_Entities_Checking();
 
 		/**
 		 * Check entity connection for products
@@ -35,13 +38,13 @@ class Admin_Ui_Product_Entity_Check implements Hooked {
 	 * @return mixed
 	 * Check "product" entity filter callback
 	 */
-	public function check_product_entity( $result_entity, $entity, Admin_UI_Entities_Checking $entities_checking ) {
+	public function check_product_entity( $result_entity, $entity) {
 
 		if ( $entity !== self::$entity ) {
 			return $result_entity;
 		}
 
-		$entities_checking->make_request = false;
+		$this->entities_checking->make_request = false;
 		$result_test   = $this->get_product();
 		$result_entity = Settings::get_option( 'check_connection_entity' );
 
