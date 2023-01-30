@@ -36,6 +36,16 @@
 - Code Review
 - Add New Methods to CRUD functionality
 
+## [4.3.1] - 2023-01-18
+
 ### Changed
 
-### Fixed
+- Remove Legacy Code
+
+## [4.3.2] - 2023-01-30
+
+### Changed
+
+- Set attributes prepare and setup methods
+- Set Image data
+- Set default variations methods

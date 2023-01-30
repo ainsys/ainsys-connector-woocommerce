@@ -12,6 +12,7 @@ class Prepare_Product_Variation_Data extends Prepare_Product_Data {
 		parent::__construct( $product );
 
 		$this->variation = new WC_Product_Variable( $this->product->get_id() );
+		
 	}
 
 	/**
@@ -68,12 +69,31 @@ class Prepare_Product_Variation_Data extends Prepare_Product_Data {
 		 */
 		$data = $this->setup_variation_tax_info( $data, $variation );
 
+		$downloadable_info = $this->get_downloadable_info_for_variation( $variation );
+		$data                 = array_merge( $data, $downloadable_info );
+		$data['variation_id'] = $variation->get_id();
 
-		if ( $variation->is_downloadable() ) {
-			$downloadable_info = $this->get_downloadable_info_for_variation( $variation );
+		$data = $this->setup_variation_attributes($data, $variation);
 
-			$data                 = array_merge( $data, $downloadable_info );
-			$data['variation_id'] = $variation->get_id();
+		return $data;
+	}
+
+	public function setup_variation_attributes($data, $variation){
+
+		$attributes = $variation->get_attributes();
+
+		if(!empty($attributes)){
+			foreach($attributes as $attribute_key => $attribute_value){
+
+				if(strpos( $attribute_key, 'attribute_' ) === false){
+					$attribute_key = 'attribute_' . $attribute_key;
+				}
+
+				$data['attributes'][$attribute_key] = Helper::format_term_value(
+					$attribute_value, $attribute_key,
+					'slug', 'name'
+				);
+			}
 		}
 
 		return $data;

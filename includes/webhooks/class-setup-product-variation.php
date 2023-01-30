@@ -2,6 +2,8 @@
 
 namespace Ainsys\Connector\Woocommerce\Webhooks;
 
+use Ainsys\Connector\Woocommerce\Helper;
+
 class Setup_Product_Variation extends Setup_Product {
 
 	protected $parent_product;
@@ -15,15 +17,11 @@ class Setup_Product_Variation extends Setup_Product {
 	}
 
 	public function setup_product_variation(){
-		var_dump('start variation');
 		/**
 		 * Add Variation to product
 		 */
 		$this->product->set_parent_id($this->parent_product->get_id());
 
-		/**
-		 * C
-		 */
 		$this->product->save();
 
 		/**
@@ -35,13 +33,12 @@ class Setup_Product_Variation extends Setup_Product {
 		 * Setup variation attributes
 		 */
 		$this->product->set_attributes(
-			$this->data['attributes']
+			$this->format_variation_attributes()
 		);
 
 		/**
 		 * Setup variation prices
 		 */
-//		$this->setup_variation_price($variation);
 		parent::set_price_info();
 
 		/**
@@ -71,7 +68,22 @@ class Setup_Product_Variation extends Setup_Product {
 		 */
 		parent::set_taxes_info();
 
-		var_dump('end variation');
+	}
+
+	private function format_variation_attributes(){
+
+		$formatted_attributes = [];
+
+		if(!empty($this->data['attributes'])){
+
+			foreach($this->data['attributes'] as $attribute_key => $attribute_value){
+				$formatted_attributes[$attribute_key] = Helper::format_term_value($attribute_value, $attribute_key, 'name', 'slug');
+			}
+
+		}
+
+		return $formatted_attributes;
+
 	}
 
 	private function setup_variation_general_info(){

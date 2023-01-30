@@ -9,6 +9,80 @@ class Helper {
 	use Plugin_Common;
 
 	/**
+	 * @param $term
+	 * @param $taxonomy
+	 * @param $from
+	 * @param $to
+	 *
+	 * @return int|string
+	 * Format term value from - to
+	 */
+	public static function format_term_value($term_value, $taxonomy, $from, $to){
+
+		$return = '';
+
+		if(empty($term_value) || empty($taxonomy)){
+			return '';
+		}
+
+		if(strpos( $taxonomy, 'attribute_' ) !== false){
+			$taxonomy = str_replace('attribute_', '', $taxonomy);
+		}
+
+		$term = get_term_by($from, $term_value, $taxonomy, $to);
+
+		switch ($to){
+			case 'slug' :
+				$return = $term->slug;
+				break;
+
+			case 'name' :
+				$return = $term->name;
+				break;
+
+			case 'id' :
+				$return = $term->term_id;
+				break;
+
+			case 'term_id' :
+				$return = $term->term_id;
+
+		}
+
+		return $return;
+
+	}
+
+	public static function setup_product_type($type){
+
+		$product = '';
+
+		switch ( $type ) {
+			case 'simple' :
+				$product = new \WC_Product_Simple();
+				break;
+
+			case 'variable' :
+				$product = new \WC_Product_Variable();
+				break;
+
+			case 'external' :
+				$product = new \WC_Product_External();
+				break;
+
+			case 'grouped' :
+				$new_product = new \WC_Product_Grouped();
+				break;
+			default:
+
+				$product = '';
+		}
+
+		return $product;
+
+	}
+
+	/**
 	 * Checks if the woocommerce plugin is active.
 	 *
 	 * @return bool
@@ -140,35 +214,18 @@ class Helper {
 		return in_array( str_replace( 'pa_', '', $attr_key ), $slugs );
 	}
 
-	/**
-	 * @param $terms
-	 * @param $taxonomy
-	 *
-	 * @return array
-	 * Format Attribute options to terms ids from values, becouse woocommerce use terms ids in attribute option parameters
-	 */
-	static function format_terms_name_to_ids( $terms, $taxonomy, $get_by = 'name' ) {
-		$terms_ids = [];
+	public static function format_term_id_to_name($term_id, $taxonomy){
 
-		if(empty($terms) || !is_array($terms)){
-			return $terms_ids;
+		$term_name = '';
+
+		$term = get_term_by('id', $term_id, $taxonomy);
+
+		if(is_object($term)){
+			$term_name = $term->name;
 		}
 
-		foreach ( $terms as $term_name ) {
-			$term = get_term_by( $get_by, $term_name, $taxonomy );
+		return $term_name;
 
-			if ( is_object( $term ) && isset( $term->term_id ) ) {
-				$terms_ids[] = $term->term_id;
-			} else {
-				$term = wp_insert_term( $term_name, $taxonomy );
-
-				if ( ! is_wp_error( $term ) ) {
-					$terms_ids[] = $term['term_id'];
-				}
-			}
-		}
-
-		return $terms_ids;
 	}
 
 	/**
@@ -178,8 +235,12 @@ class Helper {
 	 *
 	 * Check by url if image exists in media library
 	 */
-	static function check_image_exist( $url ) {
-		$dir = wp_upload_dir();
+	public static function get_attachment_id_by_url( $url ) {
+
+		return attachment_url_to_postid($url);
+
+
+		/*$dir = wp_upload_dir();
 
 		if ( false !== strpos( $url, $dir['baseurl'] . '/' ) ) { // Is URL in uploads directory?
 
@@ -205,7 +266,7 @@ class Helper {
 			}
 		}
 
-		return false;
+		return false;*/
 	}
 
 	/**
@@ -215,7 +276,8 @@ class Helper {
 	 *
 	 * Upload images to Wordpress media gallery
 	 */
-	static function upload_image_to_library( $image ) {
+	public static function upload_image_to_library( $image ) {
+
 		if ( ! is_array( $image ) ) {
 			return false;
 		}
@@ -271,7 +333,7 @@ class Helper {
 			wp_generate_attachment_metadata( $attachment_id, $sideload['file'] )
 		);
 
-		$update_meta = ( isset( $image['file'] ) ) ? Helper::update_image_metadata( $image ) : false;
+		$update_meta = ( isset( $image['file'] ) ) ? false : Helper::update_image_metadata( $image );
 
 		return $attachment_id;
 	}
@@ -283,7 +345,7 @@ class Helper {
 	 *
 	 * Update image metadata
 	 */
-	static function update_image_metadata( array $image ) {
+	public static function update_image_metadata( array $image ) {
 		if ( empty( $image ) || ! is_array( $image ) ) {
 			return false;
 		}

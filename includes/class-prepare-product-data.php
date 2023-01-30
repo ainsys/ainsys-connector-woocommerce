@@ -59,13 +59,6 @@ class Prepare_Product_Data {
 		 */
 		$data = array_merge( $data, $this->get_linked_products() );
 
-		if ( $this->product->is_type( 'variable' ) ) {
-			/**
-			 * Merge Variation Info
-			 */
-			$data = array_merge( $data, $this->get_variations_data() );
-		}
-
 		/**
 		 * Merge Taxonomies Info
 		 */
@@ -160,7 +153,6 @@ class Prepare_Product_Data {
 
 		foreach ( $product->get_downloads() as $download ) {
 			$data[] = [
-				'id'      => $download['id'],
 				'name'    => $download['name'],
 				'file'    => $download['file'],
 				'enabled' => $download['enabled']
@@ -175,19 +167,42 @@ class Prepare_Product_Data {
 			'category_ids'       => $this->product->get_category_ids(),
 			'product_cat'        => get_the_terms( $this->product->get_id(), 'product_cat' ),
 			'tag_ids'            => get_the_terms( $this->product->get_id(), 'product_tag' ),
-			'default_attributes' => $this->product->get_default_attributes(),
+			'default_attributes' => $this->get_default_attributes_info(),
 			'attributes'         => $this->get_attributes_info()
 		];
 
 		return $data;
 	}
 
+	/**
+	 * @return array
+	 * Special Formatted for default attributes info
+	 */
+
+	protected function get_default_attributes_info(){
+
+		$formatted_attributes = [];
+
+		$default_attributes = $this->product->get_default_attributes();
+
+		if(is_array($default_attributes)){
+
+			foreach($default_attributes as $attribute_key => $attribute_value){
+				$formatted_attributes[$attribute_key] = Helper::format_term_value($attribute_value, $attribute_key, 'slug', 'name');
+			}
+
+		}
+
+		return $formatted_attributes;
+
+	}
+
 	protected function get_attributes_info() {
 		$attributes = [];
-
 		foreach ( $this->product->get_attributes() as $attr_key => $attribute ) {
-			$attributes[ $attr_key ] = [
+			$attr = [
 				'id'        => $attribute['id'],
+				'taxonomy_slug' => $attr_key,
 				'name'      => $attribute['name'],
 				'position'  => $attribute['position'],
 				'visible'   => $attribute['visible'],
@@ -196,20 +211,14 @@ class Prepare_Product_Data {
 
 			if ( ! empty( $attribute['options'] ) && is_array( $attribute['options'] ) ) {
 				foreach ( $attribute['options'] as $option ) {
-					$attributes[ $attr_key ]['options'][] = $option;
+					$attr['options'][] = (is_int($option)) ? Helper::format_term_value($option, $attr_key, 'term_id', 'name') : $option;
 				}
 			}
+
+			$attributes[] = $attr;
 		}
 
 		return $attributes;
-	}
-
-	public function get_variations_data() {
-		$data = [
-			'variations_ids' => $this->product->get_children(),
-		];
-
-		return $data;
 	}
 
 	public function get_linked_products() {
@@ -287,18 +296,28 @@ class Prepare_Product_Data {
 			'sku'                => $this->product->get_sku(),
 			'menu_order'         => $this->product->get_menu_order(),
 			'is_virtual'         => $this->product->get_virtual(),
-			'permalink'          => get_permalink( $this->product->get_id() ),
 			'total_sales'        => $this->product->get_total_sales()
 		];
 	}
 
 	public function get_prices_info() {
+		$sale_date_from = $this->product->get_date_on_sale_from();
+		$sale_date_to   = $this->product->get_date_on_sale_to();
+
+		if ( is_object( $sale_date_from ) ) {
+			$sale_date_from = $sale_date_from->date( 'Y-m-d H:m:s' );
+		}
+
+		if ( is_object( $sale_date_to ) ) {
+			$sale_date_to = $sale_date_to->date( 'Y-m-d H:m:s' );
+		}
+
 		return [
-			'price'               => $this->product->get_price(),
-			'regular_price'       => $this->product->get_regular_price(),
-			'sale_price'          => $this->product->get_sale_price(),
-			'date_on_sale_from'   => $this->product->get_date_on_sale_from(),
-			'date_on_sale_to'     => $this->product->get_date_on_sale_to(),
+			'price'               => (int) $this->product->get_price(),
+			'regular_price'       => (int) $this->product->get_regular_price(),
+			'sale_price'          => (int) $this->product->get_sale_price(),
+			'date_on_sale_from'   => $sale_date_from,
+			'date_on_sale_to'     => $sale_date_to,
 			'price_excluding_tax' => wc_get_price_excluding_tax( $this->product ),
 			'price_includes_tax'  => wc_get_price_including_tax( $this->product )
 		];
@@ -316,11 +335,9 @@ class Prepare_Product_Data {
 		}
 
 		$image_data = [
-			'id'          => $id,
 			'alt'         => get_post_meta( $image->ID, '_wp_attachment_image_alt', true ),
 			'caption'     => $image->post_excerpt,
 			'description' => $image->post_content,
-			'href'        => get_permalink( $image->ID ),
 			'src'         => $image->guid,
 			'title'       => $image->post_title
 		];
