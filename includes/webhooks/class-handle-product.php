@@ -2,344 +2,181 @@
 
 namespace Ainsys\Connector\Woocommerce\Webhooks;
 
+use Ainsys\Connector\Master\Conditions;
 use Ainsys\Connector\Master\Hooked;
 use Ainsys\Connector\Master\Logger;
 use Ainsys\Connector\Master\Webhook_Handler;
+use Ainsys\Connector\Master\Webhooks\Handle;
+use Ainsys\Connector\Woocommerce\Helper;
 
-class Handle_Product implements Hooked, Webhook_Handler {
+class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 
-	public function __construct() {
-	}
+	protected static string $entity = 'product';
 
-	/**
-	 * Initializes WordPress hooks for component.
-	 *
-	 * @return void
-	 */
-	public function init_hooks() {
-		add_filter( 'ainsys_webhook_action_handlers', array( $this, 'register_webhook_handler' ), 10, 1 );
-	}
-
-	public function register_webhook_handler( $handlers = array() ) {
-		$handlers['product'] = array( $this, 'handler' );
+	public function register_webhook_handler( $handlers = [] ) {
+		$handlers[ self::$entity ] = [ $this, 'handler' ];
 
 		return $handlers;
 	}
 
 	/**
-	 * @throws \WC_API_Exception
-	 * @throws \WC_Data_Exception
+	 * @param array $data
+	 * @param string $action
+	 *
+	 * @return array
 	 */
-	public function handler( $action, $data, $object_id = 0 ) {
-
-		switch ( $action ) {
-			case 'CREATE':
-				$product_id = wp_insert_post( [ 'post_type' => 'product', 'post_title' => $data['name'] ] );
-
-				return $this->update_product( $data, $product_id );
-			case 'update':
-				return $this->update_product( $data, $object_id );
-			case 'delete':
-				$WC_Product = new \WC_Product( $object_id );
-
-				return $WC_Product->delete();
+	protected function create( array $data, string $action ): array {
+		if ( Conditions::has_entity_disable( self::$entity, $action, 'incoming' ) ) {
+			return [
+				'id'      => 0,
+				'message' => sprintf( __( 'Error: %s creation is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ),
+				                      self::$entity )
+			];
 		}
 
-		return 'Action not registered';
+		/*$product = wc_get_product( $data['ID'] );
+
+		if ( $product ) {
+			return [
+				'id'      => 0,
+				'message' => sprintf( __( 'Error: %s already exist.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity )
+			];
+		}*/
+
+		$new_product = Helper::setup_product_type($data['type']);
+
+		if ( ! is_object( $new_product ) ) {
+			return [
+				'id'      => 0,
+				'message' => sprintf( __( 'Error: %s creation is failed.', AINSYS_CONNECTOR_TEXTDOMAIN ),
+				                      self::$entity )
+			];
+		}
+
+		$setup_product = new Setup_Product( $new_product, $data );
+		$setup_product->setup_product();
+
+		if ( $data['type'] === 'variable' && isset( $data['variations'] ) && ! empty( $data['variations'] ) ) {
+			/**
+			 * Need save product to DB before create variations
+			 */
+			$new_product->save();
+
+			foreach ( $data['variations'] as $variation_data ) {
+				$variation = new \WC_Product_Variation();
+
+				$setup_variation = new Setup_Product_Variation( $variation, $variation_data, $new_product );
+				$setup_variation->setup_product_variation();
+
+				$variation->save();
+			}
+		}
+
+		$new_product->save();
+
+		return [
+			'id'      => $new_product->get_id(),
+			'message' => sprintf( __( 'Success: %s creation is done.', AINSYS_CONNECTOR_TEXTDOMAIN ),
+			                      self::$entity )
+		];
 	}
+
 
 	/**
 	 * @param $data
+	 * @param $action
 	 * @param $object_id
 	 *
-	 * @return int|string
-	 * @throws \WC_API_Exception
-	 * @throws \WC_Data_Exception
+	 * @return string
 	 */
-	private function update_product( $data, $object_id ) {
-		$data       = (array) $data;
-		$data['id'] = $object_id;
+	protected function update( $data, $action, $object_id ): array {
 
-		if ( ! wc_get_product( $object_id ) ) {
-			return 'Товар не найден';
+		if ( Conditions::has_entity_disable( self::$entity, $action, 'incoming' ) ) {
+
+			return [
+				'id'      => $object_id,
+				'message' => sprintf( __( 'Error: %s update is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ),
+				                      self::$entity )
+			];
 		}
 
-		$product = new \WC_Product( $data["id"] );
+		$product = wc_get_product($object_id);
 
-		// Title
-		if ( isset( $data['name'] ) ) {
-			wp_update_post( array( 'ID' => $product->get_id(), 'post_title' => $data['name'] ) );
+		if(!is_object($product)){
+
+			return [
+				'id'      => $object_id,
+				'message' => sprintf( __( 'Error: %s is not exist.', AINSYS_CONNECTOR_TEXTDOMAIN ),
+				                      self::$entity )
+			];
+
 		}
 
-		// Title
-		if ( isset( $data['content'] ) ) {
-			wp_update_post( array( 'ID' => $product->get_id(), 'post_content' => $data['content'] ) );
-		}
+		$setup_product = new Setup_Product( $product, $data );
+		$setup_product->setup_product();
 
-		// Virtual
-		if ( isset( $data['is_virtual'] ) ) {
-			$product->set_virtual( $data['is_virtual'] );
-		}
+		if ( $data['type'] === 'variable' && isset( $data['variations'] ) && ! empty( $data['variations'] ) ) {
 
-		// Tax status
-		if ( isset( $data['tax_status'] ) ) {
-			$product->set_tax_status( wc_clean( $data['tax_status'] ) );
-		}
+			/**
+			 * Need save product to DB before create variations
+			 */
+			$product->save();
 
-		// Tax Class
-		if ( isset( $data['tax_class'] ) ) {
-			$product->set_tax_class( wc_clean( $data['tax_class'] ) );
-		}
+			$variations_ids = $product->get_children();
 
-		// Catalog Visibility
-		if ( isset( $data['catalog_visibility'] ) ) {
-			$product->set_catalog_visibility( wc_clean( $data['catalog_visibility'] ) );
-		}
+			foreach ( $data['variations'] as $variation_data ) {
 
-		// Purchase Note
-		if ( isset( $data['purchase_note'] ) ) {
-			$product->set_purchase_note( wc_clean( $data['purchase_note'] ) );
-		}
+				$variation_id = (!empty($variation_data['ID'])) ? $variation_data['ID'] : $variation_data['variation_id'];
 
-		// Featured Product
-		if ( isset( $data['featured'] ) ) {
-			$product->set_featured( $data['featured'] );
-		}
+				unset($variations_ids[array_search($variation_id, $variations_ids)]);
 
-		// Shipping data
-		//$product = $this->save_product_shipping_data( $product, $data );
+				$variation = new \WC_Product_Variation($variation_id);
 
-		// SKU
-		if ( isset( $data['sku'] ) ) {
-			$sku     = $product->get_sku();
-			$new_sku = wc_clean( $data['sku'] );
+				$setup_variation = new Setup_Product_Variation( $variation, $variation_data, $product );
+				$setup_variation->setup_product_variation();
 
-			if ( '' == $new_sku ) {
-				$product->set_sku( '' );
-			} elseif ( $new_sku !== $sku ) {
-				if ( ! empty( $new_sku ) ) {
-					$unique_sku = wc_product_has_unique_sku( $product->get_id(), $new_sku );
-					if ( ! $unique_sku ) {
-						throw new \WC_API_Exception( 'woocommerce_api_product_sku_already_exists', __( 'The SKU already exists on another product.', 'woocommerce' ), 400 );
-					} else {
-						$product->set_sku( $new_sku );
-					}
-				} else {
-					$product->set_sku( '' );
+				$variation->save();
+			}
+
+			if(is_array($variations_ids) && !empty($variations_ids)){
+				foreach($variations_ids as $variation_id){
+					$variation = wc_get_product($variation_id);
+					$variation->delete();
 				}
 			}
+
 		}
 
+		$product->save();
 
-		// Sales and prices.
-		if ( in_array( $product->get_type(), array( 'variable', 'grouped' ) ) ) {
-			// Variable and grouped products have no prices.
-			$product->set_regular_price( '' );
-			$product->set_sale_price( '' );
-			$product->set_date_on_sale_to( '' );
-			$product->set_date_on_sale_from( '' );
-			$product->set_price( '' );
-		} else {
-			// Regular Price.
-			if ( isset( $data['regular_price'] ) ) {
-				$regular_price = ( '' === $data['regular_price'] ) ? '' : $data['regular_price'];
-				$product->set_regular_price( $regular_price );
-			}
-
-			// Sale Price.
-			if ( isset( $data['sale_price'] ) ) {
-				$sale_price = ( '' === $data['sale_price'] ) ? '' : $data['sale_price'];
-				$product->set_sale_price( $sale_price );
-			}
-
-			if ( isset( $data['sale_price_dates_from'] ) ) {
-				$date_from = $data['sale_price_dates_from'];
-			} else {
-				$date_from = $product->get_date_on_sale_from() ? date( 'Y-m-d', $product->get_date_on_sale_from()->getTimestamp() ) : '';
-			}
-
-			if ( isset( $data['sale_price_dates_to'] ) ) {
-				$date_to = $data['sale_price_dates_to'];
-			} else {
-				$date_to = $product->get_date_on_sale_to() ? date( 'Y-m-d', $product->get_date_on_sale_to()->getTimestamp() ) : '';
-			}
-
-			if ( $date_to && ! $date_from ) {
-				$date_from = strtotime( 'NOW', current_time( 'timestamp', true ) );
-			}
-
-			$product->set_date_on_sale_to( $date_to );
-			$product->set_date_on_sale_from( $date_from );
-
-			if ( $product->is_on_sale( 'edit' ) ) {
-				$product->set_price( $product->get_sale_price( 'edit' ) );
-			} else {
-				$product->set_price( $product->get_regular_price( 'edit' ) );
-			}
-		}
-
-		// Product parent ID for groups
-		if ( isset( $data['parent_id'] ) ) {
-			$product->set_parent_id( absint( $data['parent_id'] ) );
-		}
-
-		// Sold Individually
-		if ( isset( $data['sold_individually'] ) ) {
-			$product->set_sold_individually( true === $data['sold_individually'] ? 'yes' : '' );
-		}
-
-		// Stock status
-		if ( isset( $data['in_stock'] ) ) {
-			$stock_status = ( true === $data['in_stock'] ) ? 'instock' : 'outofstock';
-		} else {
-			$stock_status = $product->get_stock_status();
-
-			if ( '' === $stock_status ) {
-				$stock_status = 'instock';
-			}
-		}
-
-		// Stock Data
-		if ( 'yes' == get_option( 'woocommerce_manage_stock' ) ) {
-			// Manage stock
-			if ( isset( $data['managing_stock'] ) ) {
-				$managing_stock = ( true === $data['managing_stock'] ) ? 'yes' : 'no';
-				$product->set_manage_stock( $managing_stock );
-			} else {
-				$managing_stock = $product->get_manage_stock() ? 'yes' : 'no';
-			}
-
-			// Backorders
-			if ( isset( $data['backorders'] ) ) {
-				if ( 'notify' == $data['backorders'] ) {
-					$backorders = 'notify';
-				} else {
-					$backorders = ( true === $data['backorders'] ) ? 'yes' : 'no';
-				}
-
-				$product->set_backorders( $backorders );
-			} else {
-				$backorders = $product->get_backorders();
-			}
-
-			if ( $product->is_type( 'grouped' ) ) {
-				$product->set_manage_stock( 'no' );
-				$product->set_backorders( 'no' );
-				$product->set_stock_quantity( '' );
-				$product->set_stock_status( $stock_status );
-			} elseif ( $product->is_type( 'external' ) ) {
-				$product->set_manage_stock( 'no' );
-				$product->set_backorders( 'no' );
-				$product->set_stock_quantity( '' );
-				$product->set_stock_status( 'instock' );
-			} elseif ( 'yes' == $managing_stock ) {
-				$product->set_backorders( $backorders );
-
-				// Stock status is always determined by children so sync later.
-				if ( ! $product->is_type( 'variable' ) ) {
-					$product->set_stock_status( $stock_status );
-				}
-
-				// Stock quantity
-				if ( isset( $data['stock_quantity'] ) ) {
-					$product->set_stock_quantity( wc_stock_amount( $data['stock_quantity'] ) );
-				}
-			} else {
-				// Don't manage stock.
-				$product->set_manage_stock( 'no' );
-				$product->set_backorders( $backorders );
-				$product->set_stock_quantity( '' );
-				$product->set_stock_status( $stock_status );
-			}
-		} elseif ( ! $product->is_type( 'variable' ) ) {
-			$product->set_stock_status( $stock_status );
-		}
-
-		// Upsells
-		if ( isset( $data['upsell_ids'] ) ) {
-			$upsells = array();
-			$ids     = $data['upsell_ids'];
-
-			if ( ! empty( $ids ) ) {
-				foreach ( $ids as $id ) {
-					if ( $id && $id > 0 ) {
-						$upsells[] = $id;
-					}
-				}
-
-				$product->set_upsell_ids( $upsells );
-			} else {
-				$product->set_upsell_ids( array() );
-			}
-		}
-
-		// Cross sells
-		if ( isset( $data['cross_sell_ids'] ) ) {
-			$crosssells = array();
-			$ids        = $data['cross_sell_ids'];
-
-			if ( ! empty( $ids ) ) {
-				foreach ( $ids as $id ) {
-					if ( $id && $id > 0 ) {
-						$crosssells[] = $id;
-					}
-				}
-
-				$product->set_cross_sell_ids( $crosssells );
-			} else {
-				$product->set_cross_sell_ids( array() );
-			}
-		}
-
-		// Product categories
-		if ( isset( $data['categories'] ) && is_array( $data['categories'] ) ) {
-			$product->set_category_ids( $data['categories'] );
-		}
-
-		// Product tags
-		if ( isset( $data['tags'] ) && is_array( $data['tags'] ) ) {
-			$product->set_tag_ids( $data['tags'] );
-		}
-
-		// Downloadable
-		if ( isset( $data['downloadable'] ) ) {
-			$is_downloadable = ( true === $data['downloadable'] ) ? 'yes' : 'no';
-			$product->set_downloadable( $is_downloadable );
-		} else {
-			$is_downloadable = $product->get_downloadable() ? 'yes' : 'no';
-		}
-
-		// Downloadable options
-		if ( 'yes' == $is_downloadable ) {
-			// Download limit
-			if ( isset( $data['download_limit'] ) ) {
-				$product->set_download_limit( $data['download_limit'] );
-			}
-
-			// Download expiry
-			if ( isset( $data['download_expiry'] ) ) {
-				$product->set_download_expiry( $data['download_expiry'] );
-			}
-		}
-
-		// Product url
-		if ( $product->is_type( 'external' ) ) {
-			if ( isset( $data['product_url'] ) ) {
-				$product->set_product_url( $data['product_url'] );
-			}
-
-			if ( isset( $data['button_text'] ) ) {
-				$product->set_button_text( $data['button_text'] );
-			}
-		}
-
-		// Reviews allowed
-		if ( isset( $data['reviews_allowed'] ) ) {
-			$product->set_reviews_allowed( $data['reviews_allowed'] );
-		}
-
-		return $product->save();
+		return [
+			'id'      => $object_id,
+			'message' => sprintf( __( 'Success: %s update is done.', AINSYS_CONNECTOR_TEXTDOMAIN ),
+			                      self::$entity )
+		];
 	}
 
+
+	/**
+	 * @param $object_id
+	 * @param $data
+	 * @param $action
+	 *
+	 * @return string
+	 */
+	protected function delete( $object_id, $data, $action ): array {
+
+		if ( Conditions::has_entity_disable( self::$entity, $action, 'incoming' ) ) {
+			return sprintf( __( 'Error: %s delete is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ),
+			                self::$entity );
+		}
+
+		$result = wp_delete_post( $object_id );
+
+		return [
+			'id'      => $object_id,
+			'message' => $this->get_message( 'test', $data, self::$entity, $action )
+		];
+	}
 
 }
