@@ -2,16 +2,12 @@
 
 namespace Ainsys\Connector\Woocommerce;
 
-use Ainsys\Connector\Master\WP\Process;
-
 class Prepare_Product_Data {
 
 	protected $product;
-	protected $process;
 
 	public function __construct( $product ) {
 		$this->product = $product;
-		$this->process = new Process();
 	}
 
 	public function prepare_data() {
@@ -165,13 +161,36 @@ class Prepare_Product_Data {
 	public function get_taxonomies_info() {
 		$data = [
 			'category_ids'       => $this->product->get_category_ids(),
-			'product_cat'        => get_the_terms( $this->product->get_id(), 'product_cat' ),
+			'product_cat'        => $this->get_product_cat_data(),
 			'tag_ids'            => get_the_terms( $this->product->get_id(), 'product_tag' ),
 			'default_attributes' => $this->get_default_attributes_info(),
 			'attributes'         => $this->get_attributes_info()
 		];
 
 		return $data;
+	}
+	
+	protected function get_product_cat_data(){
+		$terms = get_the_terms( $this->product->get_id(), 'product_cat' );
+		$formated_term = [];
+
+		if(!$terms || is_wp_error($terms)){
+			return [];
+		}
+
+		foreach($terms as $term){
+			$formated_term[] = [
+				'id' => $term->term_id . '_' . random_int(0, 999999999999999),
+				'term_id' => $term->term_id,
+				'name' => $term->name,
+				'slug' => $term->slug,
+				'taxonomy' => $term->taxonomy,
+				'description' => $term->description,
+				'parent' => $term->parent
+			];
+		}
+
+		return $formated_term;
 	}
 
 	/**
@@ -201,7 +220,7 @@ class Prepare_Product_Data {
 		$attributes = [];
 		foreach ( $this->product->get_attributes() as $attr_key => $attribute ) {
 			$attr = [
-				'id'        => $attribute['id'],
+				'id'        => $attribute['id'] . '_' . random_int(0, 9999999999999),
 				'taxonomy_slug' => $attr_key,
 				'name'      => $attribute['name'],
 				'position'  => $attribute['position'],
@@ -265,7 +284,6 @@ class Prepare_Product_Data {
 			'stock_status'          => $this->product->get_stock_status(),
 			'backorders'            => $this->product->get_backorders(),
 			'sold_individuality'    => $this->product->get_sold_individually(),
-			'availability'          => $this->product->get_availability(),
 			'max_purchase_quantity' => $this->product->get_max_purchase_quantity(),
 			'min_purchase_quantity' => $this->product->get_min_purchase_quantity(),
 			'low_stock_amount'      => $this->product->get_low_stock_amount()
@@ -286,8 +304,6 @@ class Prepare_Product_Data {
 			'type'               => $this->product->get_type(),
 			'name'               => $this->product->get_name(),
 			'slug'               => $this->product->get_slug(),
-			'date_created'       => $this->product->get_date_created(),
-			'date_modified'      => $this->product->get_date_modified(),
 			'status'             => $this->product->get_status(),
 			'is_featured'        => $this->product->get_featured(),
 			'catalog_visibility' => $this->product->get_catalog_visibility(),
