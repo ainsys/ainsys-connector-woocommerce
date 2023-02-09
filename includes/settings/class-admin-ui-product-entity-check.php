@@ -6,14 +6,19 @@ use Ainsys\Connector\Master\Hooked;
 use Ainsys\Connector\Master\Logger;
 use Ainsys\Connector\Master\Settings\Settings;
 use Ainsys\Connector\Woocommerce\WP\Process_Products;
+use Ainsys\Connector\Master\Settings\Admin_UI_Entities_Checking;
 
 class Admin_Ui_Product_Entity_Check implements Hooked {
 
 	protected $process;
+	protected $entities_checking;
+
+	static public $entity = 'product';
 
 	public function init_hooks() {
 
 		$this->process = new Process_Products();
+		$this->entities_checking = new Admin_UI_Entities_Checking();
 
 		/**
 		 * Check entity connection for products
@@ -33,13 +38,17 @@ class Admin_Ui_Product_Entity_Check implements Hooked {
 	 * @return mixed
 	 * Check "product" entity filter callback
 	 */
-	public function check_product_entity( $result_entity, $entity, $make_request ) {
+	public function check_product_entity( $result_entity, $entity) {
 
+		if ( $entity !== self::$entity ) {
+			return $result_entity;
+		}
+
+		$this->entities_checking->make_request = false;
 		$result_test   = $this->get_product();
 		$result_entity = Settings::get_option( 'check_connection_entity' );
-		$result_entity = $this->get_result_entity( $result_test, $result_entity, $entity );
 
-		return $result_entity;
+		return $this->get_result_entity( $result_test, $result_entity, $entity );
 
 	}
 
