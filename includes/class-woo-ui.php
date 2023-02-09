@@ -2,12 +2,8 @@
 
 namespace Ainsys\Connector\Woocommerce;
 
-use Ainsys\Connector\Master\Core;
 use Ainsys\Connector\Master\Hooked;
-use Ainsys\Connector\Master\Logger;
 use Ainsys\Connector\Master\Plugin_Common;
-use Ainsys\Connector\Master\Settings\Admin_UI;
-use Ainsys\Connector\Master\UTM_Handler;
 use Ainsys\Connector\Woocommerce\Webhooks\Plugin;
 
 class Woo_UI implements Hooked {
@@ -30,7 +26,7 @@ class Woo_UI implements Hooked {
 
 		if ( $this->Helper->is_woocommerce_active() ) {
 			add_filter( 'ainsys_status_list', array( $this, 'add_status_of_component' ), 10, 1 );
-			add_filter( 'ainsys_get_entities_list', array( $this, 'add_product_entity_to_list' ), 10, 1 );
+			add_filter( 'ainsys_get_entities_list', array( $this, 'add_woocommerce_entities_to_list' ), 10, 1 );
 		}
 
 	}
@@ -54,11 +50,13 @@ class Woo_UI implements Hooked {
 	 * @param $entities_list
 	 *
 	 * @return mixed
+	 * Add Woocommerce entities to Admin panel from check
 	 */
 
-	public function add_product_entity_to_list($entities_list){
+	public function add_woocommerce_entities_to_list($entities_list){
 
 		$entities_list['product'] = __( 'Product / fields', AINSYS_CONNECTOR_TEXTDOMAIN );
+//		$entities_list['shop_order'] = __( 'Order / fields', AINSYS_CONNECTOR_TEXTDOMAIN );
 
 		/*if ( function_exists( 'wc_coupons_enabled' ) ) {
 			if ( wc_coupons_enabled() ) {
