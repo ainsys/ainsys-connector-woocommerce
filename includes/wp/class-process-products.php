@@ -93,9 +93,9 @@ class Process_Products extends Process implements Hooked {
 			return [];
 		}
 
-		if ( ! $this->is_updated( $product_id, $update ) ) {
+		/*if ( ! $this->is_updated( $product_id, $product, $update ) ) {
 			return [];
-		}
+		}*/
 
 		if ( get_post_type( $product_id ) !== self::$entity ) {
 			return [];
@@ -125,9 +125,9 @@ class Process_Products extends Process implements Hooked {
 			return;
 		}
 
-		if ( ! $this->is_updated( $product_id, $update ) ) {
+		/*if ( ! $this->is_updated( $product_id, $product, $update ) ) {
 			return;
-		}
+		}*/
 
 		if ( get_post_type($product_id) !== self::$entity ) {
 			return;

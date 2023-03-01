@@ -27,10 +27,13 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 	 */
 	protected function create( array $data, string $action ): array {
 		if ( Conditions::has_entity_disable( self::$entity, $action, 'incoming' ) ) {
+
+			$message = sprintf( __( 'Error: %s creation is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity . ' ' . $data['name'] );
+			$this->handle_error($data, '', $message, self::$entity, $action);
+
 			return [
 				'id'      => 0,
-				'message' => sprintf( __( 'Error: %s creation is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ),
-				                      self::$entity )
+				'message' => $message
 			];
 		}
 
@@ -46,10 +49,13 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 		$new_product = Helper::setup_product_type($data['type']);
 
 		if ( ! is_object( $new_product ) ) {
+
+			$message = sprintf( __( 'Error: %s creation is failed.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity . ' ' . $data['name'] );
+			$this->handle_error($data, '', $message, self::$entity, $action);
+
 			return [
 				'id'      => 0,
-				'message' => sprintf( __( 'Error: %s creation is failed.', AINSYS_CONNECTOR_TEXTDOMAIN ),
-				                      self::$entity )
+				'message' => $message
 			];
 		}
 
@@ -74,10 +80,22 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 
 		$new_product->save();
 
+		$message = sprintf( __( 'Success: %s creation is done.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity . ' ' . $data['name'] );
+
+		Logger::save(
+			[
+				'object_id'       => $new_product->get_id(),
+				'entity'          => self::$entity,
+				'request_action'  => $action,
+				'request_type'    => 'incoming',
+				'request_data'    => serialize( $data ),
+				'server_response' => $message,
+			]
+		);
+
 		return [
 			'id'      => $new_product->get_id(),
-			'message' => sprintf( __( 'Success: %s creation is done.', AINSYS_CONNECTOR_TEXTDOMAIN ),
-			                      self::$entity )
+			'message' => $message
 		];
 	}
 
@@ -93,10 +111,12 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 
 		if ( Conditions::has_entity_disable( self::$entity, $action, 'incoming' ) ) {
 
+			$message = sprintf( __( 'Error: %s update is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity . ' ' . $data['name'] );
+			$this->handle_error($data, '', $message, self::$entity, $action);
+
 			return [
 				'id'      => $object_id,
-				'message' => sprintf( __( 'Error: %s update is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ),
-				                      self::$entity )
+				'message' => $message
 			];
 		}
 
@@ -104,10 +124,12 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 
 		if(!is_object($product)){
 
+			$message = sprintf( __( 'Error: %s is not exist.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity . ' ' . $data['name'] );
+			$this->handle_error($data, '', $message, self::$entity, $action);
+
 			return [
 				'id'      => $object_id,
-				'message' => sprintf( __( 'Error: %s is not exist.', AINSYS_CONNECTOR_TEXTDOMAIN ),
-				                      self::$entity )
+				'message' => $message
 			];
 
 		}
@@ -149,10 +171,22 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 
 		$product->save();
 
+		$message = sprintf( __( 'Success: %s update is done.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity . ' ' . $data['name'] );
+
+		Logger::save(
+			[
+				'object_id'       => $object_id,
+				'entity'          => self::$entity,
+				'request_action'  => $action,
+				'request_type'    => 'incoming',
+				'request_data'    => serialize( $data ),
+				'server_response' => $message,
+			]
+		);
+
 		return [
 			'id'      => $object_id,
-			'message' => sprintf( __( 'Success: %s update is done.', AINSYS_CONNECTOR_TEXTDOMAIN ),
-			                      self::$entity )
+			'message' => $message
 		];
 	}
 
@@ -167,16 +201,51 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 	protected function delete( $object_id, $data, $action ): array {
 
 		if ( Conditions::has_entity_disable( self::$entity, $action, 'incoming' ) ) {
-			return sprintf( __( 'Error: %s delete is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ),
-			                self::$entity );
+
+			$message = sprintf( __( 'Error: %s delete is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity);
+			$this->handle_error($data, '', $message, self::$entity, $action);
+
+			return [
+				'id'      => $object_id,
+				'message' => $message
+			];
+
 		}
 
 		$result = wp_delete_post( $object_id );
 
-		return [
-			'id'      => $object_id,
-			'message' => $this->get_message( 'test', $data, self::$entity, $action )
-		];
+		if(!$result){
+
+			$message = sprintf( __( 'Error: %s delete is failed.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity);
+			$this->handle_error($data, '', $message, self::$entity, $action);
+
+			return [
+				'id'      => $object_id,
+				'message' => $message
+			];
+
+		}else{
+
+			$message = sprintf( __( 'Success: %s delete is done.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity);
+
+			Logger::save(
+				[
+					'object_id'       => $object_id,
+					'entity'          => self::$entity,
+					'request_action'  => $action,
+					'request_type'    => 'incoming',
+					'request_data'    => serialize( $data ),
+					'server_response' => $message,
+				]
+			);
+
+			return [
+				'id'      => $object_id,
+				'message' => $message
+			];
+
+		}
+
 	}
 
 }

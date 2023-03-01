@@ -8,6 +8,49 @@ class Helper {
 
 	use Plugin_Common;
 
+	public static function get_attribute_id_by_slug($slug){
+
+		$slug = str_replace('pa_', '', $slug);
+
+		$attributes = wc_get_attribute_taxonomies();
+
+		$id = 0;
+
+		foreach($attributes as $key => $attribute){
+
+			if($attribute->attribute_name == $slug){
+				$id = $attribute->attribute_id;
+				break;
+			}
+
+		}
+
+		return $id;
+
+	}
+
+	/**
+	 * @param $term
+	 * @param string $taxonomy
+	 *
+	 * @return false|int
+	 */
+	public static function get_term_id($term, $taxonomy = 'product_cat'){
+
+		if(term_exists($term['slug'])){
+			$term_id = get_term_by('slug', $term['slug'], $taxonomy)->term_id;
+			return $term_id;
+		}
+
+		if(term_exists($term['name'])){
+			$term_id = get_term_by('name', $term['name'], $taxonomy)->term_id;
+			return $term_id;
+		}
+
+		return false;
+
+	}
+
 	/**
 	 * @param $status
 	 *
@@ -39,7 +82,7 @@ class Helper {
 		$return = '';
 
 		if(empty($term_value) || empty($taxonomy)){
-			return '';
+			return $return;
 		}
 
 		if(strpos( $taxonomy, 'attribute_' ) !== false){
@@ -47,6 +90,10 @@ class Helper {
 		}
 
 		$term = get_term_by($from, $term_value, $taxonomy, $to);
+
+		if(!$term){
+			return $return;
+		}
 
 		switch ($to){
 			case 'slug' :
@@ -110,45 +157,74 @@ class Helper {
 
 	/**
 	 * @param $term
+	 * @param string $taxonomy
 	 *
 	 * @return array|int[]|\WP_Error
 	 * Create new product_cat taxonomy term
 	 */
-	public function add_term( $term ) {
+	public static function add_term( $term, $taxonomy = 'product_cat') {
 
-		$args = [
-			'description' => $term['description'],
-			'slug'        => $term['slug'],
-		];
 
-		if($term['parent'] != 0){
-			$args['parent'] = $term['parent'];
+		$args = [];
+
+		if(is_array($term)){
+
+			$term_name = $term['name'];
+
+			if(isset($term['slug'])){
+				$args['slug'] = $term['slug'];
+			}
+
+			if(isset($term['description'])){
+				$args['description'] = $term['description'];
+			}
+
+			if($term['parent'] != 0 && !empty($term['parent'])){
+				$args['parent'] = $term['parent'];
+			}
+		}else{
+			$term_name = $term;
 		}
 
-		return wp_insert_term( $term['name'], $term['taxonomy'], $args );
+		return wp_insert_term( $term_name, $taxonomy, $args );
 	}
 
 	/**
 	 * @param $term
+	 * @param string $taxonomy
 	 *
-	 * @return array|object|\WP_Error|\WP_Term|null
+	 * @return array|object|\WP_Error|\WP_Term|null|false
 	 * Update product_cat taxonomy term
 	 */
-	public function update_term( $term ) {
+	public static function update_term( $term, $taxonomy = 'product_cat', $get_term_by = 'name' ) {
+
+		$term_id = Helper::get_term_id($term, $taxonomy);
+
+		if(!is_array($term)){
+			$term = get_term_by($get_term_by, $term, $taxonomy, ARRAY_A);
+
+			if(is_wp_error($term)){
+				return false;
+			}
+
+		}
 
 		$args = [
 			'name'        => $term['name'],
 			'slug'        => $term['slug'],
-			'description' => $term['description'],
 		];
 
-		if($term['parent'] != 0){
+		if(isset($term['description'])){
+			$args['description'] = $term['description'];
+		}
+
+		if($term['parent'] != 0 && !empty($term['parent'])){
 			$args['parent'] = $term['parent'];
 		}
 
 		return wp_update_term(
-			$term['term_id'],
-			$term['taxonomy'],
+			$term_id,
+			$taxonomy,
 			$args
 		);
 	}
@@ -176,7 +252,8 @@ class Helper {
 		if ( ! in_array( $attribute_name, $attribute_taxonomies, true ) ) {
 			$attribute_id = wc_create_attribute(
 				[
-					'name'         => $name,
+//					'name'         => $name,
+					'name'         => $attribute['attribute_label'],
 					'slug'         => $attribute_name,
 					'type'         => 'select',
 					'order_by'     => 'menu_order',
@@ -225,10 +302,12 @@ class Helper {
 	 * Check if Attribute taxonomy already exist
 	 */
 	public function attribute_taxonomy_exist( $attr_key ) {
+
 		$attributes = wc_get_attribute_taxonomies();
 		$slugs      = wp_list_pluck( $attributes, 'attribute_name' );
 
-		return in_array( str_replace( 'pa_', '', $attr_key ), $slugs );
+		return in_array( str_replace( 'pa_', '', sanitize_title($attr_key) ), $slugs );
+
 	}
 
 	public static function format_term_id_to_name($term_id, $taxonomy){
