@@ -168,6 +168,29 @@ class Prepare_Product_Data {
 
 		return $data;
 	}
+	
+	protected function get_product_cat_data(){
+		$terms = get_the_terms( $this->product->get_id(), 'product_cat' );
+		$formated_term = [];
+
+		if(!$terms || is_wp_error($terms)){
+			return [];
+		}
+
+		foreach($terms as $term){
+			$formated_term[] = [
+				'id' => $term->term_id . '_' . random_int(0, 999999999999999),
+				'term_id' => $term->term_id,
+				'name' => $term->name,
+				'slug' => $term->slug,
+				'taxonomy' => $term->taxonomy,
+				'description' => $term->description,
+				'parent' => $term->parent
+			];
+		}
+
+		return $formated_term;
+	}
 
 	protected function get_tags(){
 

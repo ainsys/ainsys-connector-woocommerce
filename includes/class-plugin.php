@@ -10,6 +10,7 @@ use Ainsys\Connector\Woocommerce\Settings\Admin_Ui_Product_Attribute_Check;
 use Ainsys\Connector\Woocommerce\Settings\Admin_Ui_Product_Category_Check;
 use Ainsys\Connector\Woocommerce\Settings\Admin_Ui_Product_Entity_Check;
 use Ainsys\Connector\Woocommerce\Settings\Admin_Ui_Product_Tag_Check;
+// use Ainsys\Connector\Woocommerce\Settings\Admin_Ui_Order_Entity_Check;
 use Ainsys\Connector\Woocommerce\Webhooks\Handle_Order;
 use Ainsys\Connector\Woocommerce\Webhooks\Handle_Product;
 use Ainsys\Connector\Woocommerce\Webhooks\Handle_Product_Attribute;

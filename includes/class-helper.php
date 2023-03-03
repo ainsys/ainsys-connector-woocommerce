@@ -69,6 +69,23 @@ class Helper {
 	}
 
 	/**
+	 * @param $status
+	 *
+	 * @return bool
+	 */
+	public static function is_valide_order_status($status){
+
+		$statuses = wc_get_order_statuses();
+
+		if(array_key_exists($status, $statuses)){
+			return true;
+		}
+
+		return false;
+
+	}
+
+	/**
 	 * @param $term
 	 * @param $taxonomy
 	 * @param $from
