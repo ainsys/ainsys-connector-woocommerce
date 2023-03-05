@@ -4,18 +4,18 @@ namespace Ainsys\Connector\Woocommerce\Settings;
 
 use Ainsys\Connector\Master\Hooked;
 use Ainsys\Connector\Master\Settings\Settings;
-use Ainsys\Connector\Woocommerce\WP\Process_Products;
+use Ainsys\Connector\Woocommerce\WP\Process_Product_Attribute;
 use Ainsys\Connector\Master\Settings\Admin_UI_Entities_Checking;
 
-class Admin_Ui_Product_Entity_Check implements Hooked {
+class Admin_Ui_Product_Attribute_Check implements Hooked {
 
 	protected $process;
 
-	static public $entity = 'product';
+	static public $entity = 'product_attribute';
 
 	public function init_hooks() {
 
-		$this->process = new Process_Products();
+		$this->process = new Process_Product_Attribute();
 
 		/**
 		 * Check entity connection for products
@@ -30,7 +30,7 @@ class Admin_Ui_Product_Entity_Check implements Hooked {
 	 * @param $make_request
 	 *
 	 * @return mixed
-	 * Check "product" entity filter callback
+	 * Check Product Attribute entity filter callback
 	 */
 	public function check_product_entity( $result_entity, $entity, Admin_UI_Entities_Checking $entities_checking) {
 
@@ -38,8 +38,7 @@ class Admin_Ui_Product_Entity_Check implements Hooked {
 			return $result_entity;
 		}
 
-		$entities_checking->make_request = false;
-		$result_test   = $this->get_product();
+		$result_test   = $this->get_product_attribute();
 		$result_entity = Settings::get_option( 'check_connection_entity' );
 
 		return $entities_checking->get_result_entity($result_test, $result_entity, $entity);
@@ -49,24 +48,20 @@ class Admin_Ui_Product_Entity_Check implements Hooked {
 	/**
 	 * @return array|false
 	 *
-	 * Get product data for AINSYS
+	 * Get product attribute data for AINSYS
 	 *
 	 */
 
-	private function get_product() {
+	private function get_product_attribute() {
 
-		$args = array(
-			'limit' => 1,
-		);
+		$attributes = wc_get_attribute_taxonomies();
 
-		$products = wc_get_products( $args );
+		if ( ! empty( $attributes ) ) {
 
-		if ( ! empty( $products ) ) {
+			$attribute    = end( $attributes );
+			$attribute_id = $attribute->attribute_id;
 
-			$product    = end( $products );
-			$product_id = $product->get_id();
-
-			return $this->process->process_checking( $product_id, $product, true );
+			return $this->process->process_checking( $attribute_id, $attribute, true );
 
 		} else {
 			return false;

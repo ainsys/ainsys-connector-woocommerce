@@ -70,7 +70,7 @@ class Prepare_Product_Data {
 		/**
 		 * Merge images info
 		 */
-		$data = array_merge( $data, $this->get_images_info() );
+//		$data = array_merge( $data, $this->get_images_info() );
 
 		/**
 		 * Merge Reviews info
@@ -101,9 +101,9 @@ class Prepare_Product_Data {
 	public function get_reviews_info() {
 		return [
 			'reviews_allowed' => $this->product->get_reviews_allowed(),
-			'rating_counts'   => $this->product->get_rating_counts(),
-			'average_rating'  => $this->product->get_average_rating(),
-			'review_count'    => $this->product->get_review_count()
+//			'rating_counts'   => $this->product->get_rating_counts(),
+//			'average_rating'  => $this->product->get_average_rating(),
+//			'review_count'    => $this->product->get_review_count()
 		];
 	}
 
@@ -160,10 +160,9 @@ class Prepare_Product_Data {
 
 	public function get_taxonomies_info() {
 		$data = [
-			'category_ids'       => $this->product->get_category_ids(),
-			'product_cat'        => $this->get_product_cat_data(),
-			'tag_ids'            => get_the_terms( $this->product->get_id(), 'product_tag' ),
-			'default_attributes' => $this->get_default_attributes_info(),
+			'category_ids'       => $this->get_categories(),
+			'tag_ids'            => $this->get_tags(),
+//			'default_attributes' => $this->get_default_attributes_info(),
 			'attributes'         => $this->get_attributes_info()
 		];
 
@@ -193,6 +192,41 @@ class Prepare_Product_Data {
 		return $formated_term;
 	}
 
+	protected function get_tags(){
+
+		$formatted_tags = [];
+
+		$product_tags = get_the_terms( $this->product->get_id(), 'product_tag' );
+
+		if(is_array($product_tags) && !empty($product_tags)){
+			foreach($product_tags as $product_tag){
+				$formatted_tags[] = $product_tag->name;
+			}
+		}
+
+		return $formatted_tags;
+
+	}
+
+	protected function get_categories(){
+
+		$formatted_categories = [];
+
+		$category_ids = $this->product->get_category_ids();
+
+		if(is_array($category_ids) && !empty($category_ids)){
+			foreach($category_ids as $category_id){
+				$formatted_categories[] = Helper::format_term_value(
+					$category_id,
+					'product_cat',
+					'id', 'name');
+			}
+		}
+
+		return $formatted_categories;
+
+	}
+	
 	/**
 	 * @return array
 	 * Special Formatted for default attributes info
@@ -219,10 +253,11 @@ class Prepare_Product_Data {
 	protected function get_attributes_info() {
 		$attributes = [];
 		foreach ( $this->product->get_attributes() as $attr_key => $attribute ) {
+			$attribute_name = wc_get_attribute($attribute['id'])->name;
 			$attr = [
 				'id'        => $attribute['id'] . '_' . random_int(0, 9999999999999),
 				'taxonomy_slug' => $attr_key,
-				'name'      => $attribute['name'],
+				'name'      => $attribute_name,
 				'position'  => $attribute['position'],
 				'visible'   => $attribute['visible'],
 				'variation' => $attribute['variation']
@@ -329,13 +364,10 @@ class Prepare_Product_Data {
 		}
 
 		return [
-			'price'               => (int) $this->product->get_price(),
 			'regular_price'       => (int) $this->product->get_regular_price(),
 			'sale_price'          => (int) $this->product->get_sale_price(),
 			'date_on_sale_from'   => $sale_date_from,
 			'date_on_sale_to'     => $sale_date_to,
-			'price_excluding_tax' => wc_get_price_excluding_tax( $this->product ),
-			'price_includes_tax'  => wc_get_price_including_tax( $this->product )
 		];
 	}
 

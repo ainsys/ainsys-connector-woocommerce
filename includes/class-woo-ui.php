@@ -56,6 +56,9 @@ class Woo_UI implements Hooked {
 	public function add_woocommerce_entities_to_list($entities_list){
 
 		$entities_list['product'] = __( 'Product / fields', AINSYS_CONNECTOR_TEXTDOMAIN );
+		$entities_list['product_cat'] = __( 'Product Category / fields', AINSYS_CONNECTOR_TEXTDOMAIN );
+		$entities_list['product_tag'] = __( 'Product Tag / fields', AINSYS_CONNECTOR_TEXTDOMAIN );
+		$entities_list['product_attribute'] = __( 'Product Attribute / fields', AINSYS_CONNECTOR_TEXTDOMAIN );
 //		$entities_list['shop_order'] = __( 'Order / fields', AINSYS_CONNECTOR_TEXTDOMAIN );
 
 		/*if ( function_exists( 'wc_coupons_enabled' ) ) {
