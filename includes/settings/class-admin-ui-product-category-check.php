@@ -4,18 +4,18 @@ namespace Ainsys\Connector\Woocommerce\Settings;
 
 use Ainsys\Connector\Master\Hooked;
 use Ainsys\Connector\Master\Settings\Settings;
-use Ainsys\Connector\Woocommerce\WP\Process_Products;
+use Ainsys\Connector\Woocommerce\WP\Process_Product_Cat;
 use Ainsys\Connector\Master\Settings\Admin_UI_Entities_Checking;
 
-class Admin_Ui_Product_Entity_Check implements Hooked {
+class Admin_Ui_Product_Category_Check implements Hooked {
 
 	protected $process;
 
-	static public $entity = 'product';
+	static public $entity = 'product_cat';
 
 	public function init_hooks() {
 
-		$this->process = new Process_Products();
+		$this->process = new Process_Product_Cat();
 
 		/**
 		 * Check entity connection for products
@@ -39,7 +39,7 @@ class Admin_Ui_Product_Entity_Check implements Hooked {
 		}
 
 		$entities_checking->make_request = false;
-		$result_test   = $this->get_product();
+		$result_test   = $this->get_product_cat();
 		$result_entity = Settings::get_option( 'check_connection_entity' );
 
 		return $entities_checking->get_result_entity($result_test, $result_entity, $entity);
@@ -53,20 +53,21 @@ class Admin_Ui_Product_Entity_Check implements Hooked {
 	 *
 	 */
 
-	private function get_product() {
+	private function get_product_cat() {
 
 		$args = array(
-			'limit' => 1,
+			'taxonomy' => 'product_cat',
+			'hide_empty' => false
 		);
 
-		$products = wc_get_products( $args );
+		$product_cats = get_terms($args);
 
-		if ( ! empty( $products ) ) {
+		if ( ! empty( $product_cats ) ) {
 
-			$product    = end( $products );
-			$product_id = $product->get_id();
+			$product_cat    = end( $product_cats );
+			$product_cat_id = $product_cat->term_id;
 
-			return $this->process->process_checking( $product_id, $product, true );
+			return $this->process->process_checking( $product_cat_id, $product_cat, true );
 
 		} else {
 			return false;
