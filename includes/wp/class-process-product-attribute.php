@@ -48,15 +48,6 @@ class Process_Product_Attribute extends Process implements Hooked {
 		}
 
 		if ( wc_attribute_taxonomy_id_by_name( $taxonomy ) === 0 ) {
-			Logger::save( [
-				'object_id'      => 0,
-				'entity'         => self::$entity,
-				'request_action' => self::$action,
-				'request_type'   => 'outgoing',
-				'request_data'   => serialize( [ $term_id, $tt_id, $taxonomy ] ),
-				'error'          => 1,
-			] );
-
 			return;
 		}
 
