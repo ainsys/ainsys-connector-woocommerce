@@ -6,7 +6,7 @@ use Ainsys\Connector\Master\Conditions;
 use Ainsys\Connector\Master\Hooked;
 use Ainsys\Connector\Master\Logger;
 use Ainsys\Connector\Master\WP\Process;
-use Ainsys\Connector\Woocommerce\WP\Prepare\Prepare_Product_Attribute_Data;
+use Ainsys\Connector\Woocommerce\WP\Prepare\Prepare_Product_Attribute;
 
 class Process_Product_Attribute extends Process implements Hooked {
 
@@ -230,7 +230,7 @@ class Process_Product_Attribute extends Process implements Hooked {
 
 		}
 
-		return ( new Prepare_Product_Attribute_Data( $attribute ) )->prepare_data();
+		return ( new Prepare_Product_Attribute( $attribute ) )->prepare_data();
 
 	}
 

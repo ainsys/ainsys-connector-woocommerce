@@ -4,7 +4,7 @@ namespace Ainsys\Connector\Woocommerce\WP\Prepare;
 
 use Ainsys\Connector\Master\Helper;
 
-class Prepare_Product_Attribute_Data {
+class Prepare_Product_Attribute {
 
 	protected object $attribute;
 
