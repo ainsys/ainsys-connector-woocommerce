@@ -58,6 +58,7 @@ class Admin_UI implements Hooked {
 		$entities_list['product_cat']       = __( 'Product Category / fields', AINSYS_CONNECTOR_WOOCOMMERCE_TEXTDOMAIN );
 		$entities_list['product_tag']       = __( 'Product Tag / fields', AINSYS_CONNECTOR_WOOCOMMERCE_TEXTDOMAIN );
 		$entities_list['product_attribute'] = __( 'Product Attribute / fields', AINSYS_CONNECTOR_WOOCOMMERCE_TEXTDOMAIN );
+		$entities_list['shop_order']        = __( 'Order / fields', AINSYS_CONNECTOR_WOOCOMMERCE_TEXTDOMAIN );
 
 		return $entities_list;
 
