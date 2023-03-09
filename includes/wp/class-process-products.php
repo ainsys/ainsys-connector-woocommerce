@@ -151,12 +151,10 @@ class Process_Products extends Process implements Hooked {
 	 */
 	public function prepare_data( $product_id ): array {
 
-		$data = [];
-
 		$product = wc_get_product( $product_id );
 
 		if ( ! $product ) {
-			return $data;
+			return [];
 		}
 
 		$data = ( new Prepare_Product( $product ) )->prepare_data();
