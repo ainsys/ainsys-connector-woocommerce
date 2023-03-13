@@ -25,6 +25,8 @@ class Process_Products extends Process implements Hooked {
 
 		add_action( 'woocommerce_delete_product', [ $this, 'process_delete' ], 10, 1 );
 		add_action( 'woocommerce_delete_product_variation', [ $this, 'process_delete' ], 10, 1 );
+		add_action( 'woocommerce_trash_product', [ $this, 'process_delete' ], 10, 1 );
+		add_action( 'woocommerce_trash_product_variation', [ $this, 'process_delete' ], 10, 1 );
 
 	}
 
