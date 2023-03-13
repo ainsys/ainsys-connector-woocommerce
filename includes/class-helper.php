@@ -133,35 +133,26 @@ class Helper {
 	/**
 	 * @param $type
 	 *
-	 * @return string|\WC_Product_External|\WC_Product_Grouped|\WC_Product_Simple|\WC_Product_Variable
+	 * @return \WC_Product_External|\WC_Product_Grouped|\WC_Product_Simple|\WC_Product_Variable
 	 *
 	 * @todo Не понял зачем этот метод если он вызывается один раз, занести его туда где вызывается?
 	 */
-	public static function setup_product_type( $type ) {
+	public static function get_product_type( $type ) {
 
-		switch ( $type ) {
-			case 'simple' :
-				$product = new WC_Product_Simple();
-				break;
-
-			case 'variable' :
-				$product = new WC_Product_Variable();
-				break;
-
-			case 'external' :
-				$product = new WC_Product_External();
-				break;
-
-			case 'grouped' :
-				$product = new WC_Product_Grouped();
-				break;
-			default:
-
-				$product = '';
-				break;
+		if ( 'variable' === $type ) {
+			return new WC_Product_Variable();
 		}
 
-		return $product;
+		if ( 'external' === $type ) {
+			return new WC_Product_External();
+		}
+
+		if ( 'grouped' === $type ) {
+			return new WC_Product_Grouped();
+		}
+
+		return new WC_Product_Simple();
+
 
 	}
 
