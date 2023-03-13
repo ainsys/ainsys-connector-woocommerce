@@ -1,25 +1,28 @@
 <?php
 
-namespace Ainsys\Connector\Woocommerce\Webhooks;
+namespace Ainsys\Connector\Woocommerce\Webhooks\Setup;
 
 use Ainsys\Connector\Woocommerce\Helper;
 
 class Setup_Product {
 
-	protected $product_id;
-	protected $data;
-	protected $action;
-	protected $product;
-	protected $helper;
+	protected int $product_id;
+
+	protected array $data;
+
+	protected object $product;
+
 
 	public function __construct( $product, $data ) {
+
 		$this->data       = $data;
 		$this->product_id = (int) $data['ID'];
 		$this->product    = $product;
-		$this->helper     = new Helper();
 	}
 
-	public function setup_product() {
+
+	public function setup_product(): void {
+
 		$this->product->save();
 
 		$this->set_general_info();
@@ -35,7 +38,9 @@ class Setup_Product {
 		$this->setup_grouped_products_info();
 	}
 
-	public function setup_grouped_products_info() {
+
+	public function setup_grouped_products_info(): void {
+
 		if ( isset( $this->data['grouped_products_ids'] ) ) {
 			if ( ! is_array( $this->data['grouped_products_ids'] ) ) {
 				$this->data['grouped_products_ids'] = [];
@@ -46,7 +51,9 @@ class Setup_Product {
 		}
 	}
 
-	public function setup_external_data() {
+
+	public function setup_external_data(): void {
+
 		if ( isset( $this->data['external_url'] ) ) {
 			$this->product->set_product_url( $this->data['external_url'] );
 		}
@@ -56,26 +63,26 @@ class Setup_Product {
 		}
 	}
 
-	public function setup_taxonomies() {
-		if ( isset( $this->data['category_ids'] ) ) {
+
+	public function setup_taxonomies(): void {
+
+		if ( isset( $this->data['product_categories'] ) ) {
 			$this->product->set_category_ids(
-				$this->setup_product_terms_ids( $this->data['category_ids'], 'product_cat' )
+				$this->get_product_terms_ids( $this->data['product_categories'], 'product_cat' )
 			);
 		}
 
-		if ( isset( $this->data['tag_ids'] ) ) {
+		if ( isset( $this->data['product_tags'] ) ) {
 			$this->product->set_tag_ids(
-				$this->setup_product_terms_ids( $this->data['tag_ids'], 'product_tag' )
+				$this->get_product_terms_ids( $this->data['product_tags'], 'product_tag' )
 			);
 		}
 
-		if ( isset( $this->data['attributes'] ) ) {
+		if ( isset( $this->data['product_attributes'] ) ) {
 
 			$this->product->set_attributes( [] );
 
-			$attributes = $this->setup_attributes( $this->data['attributes'] );
-
-			var_dump($attributes);
+			$attributes = $this->get_attributes( $this->data['product_attributes'] );
 
 			$this->product->set_attributes( $attributes );
 
@@ -83,12 +90,14 @@ class Setup_Product {
 
 		if ( $this->data['type'] === 'variable' ) {
 			$this->product->set_default_attributes(
-				$this->set_default_attributes_info()
+				$this->get_default_attributes_info()
 			);
 		}
 	}
 
-	protected function set_default_attributes_info() {
+
+	protected function get_default_attributes_info(): array {
+
 		$default_attributes = [];
 
 		if ( ! empty( $this->data['default_attributes'] ) && is_array( $this->data['default_attributes'] ) ) {
@@ -100,14 +109,18 @@ class Setup_Product {
 		return $default_attributes;
 	}
 
+
 	/**
+	 * Get product categories ids
+	 *
 	 * @param $terms
 	 * @param $taxonomy
 	 *
 	 * @return array
-	 * Setup product categories
+	 *
 	 */
-	protected function setup_product_terms_ids( $terms, $taxonomy ) {
+	protected function get_product_terms_ids( $terms, $taxonomy ): array {
+
 		$ids = [];
 
 		if ( empty( $terms ) || ! is_array( $terms ) ) {
@@ -116,7 +129,7 @@ class Setup_Product {
 
 		foreach ( $terms as $term ) {
 
-			if(term_exists($term)){
+			if ( term_exists( $term ) ) {
 				$term_id = Helper::format_term_value( $term, $taxonomy, 'name', 'term_id' );
 			}
 
@@ -130,14 +143,15 @@ class Setup_Product {
 		return array_unique( $ids );
 	}
 
+
 	/**
+	 * This function Create new attributes from data from AINSYS
+	 *
 	 * @param $attributes
 	 *
 	 * @return array
-	 *
-	 * This function Create new attributes from data from AINSYS
 	 */
-	protected function setup_attributes( $attributes ) { // Need to delete
+	protected function get_attributes( $attributes ): array { // Need to delete
 
 		$new_attributes = [];
 
@@ -145,19 +159,19 @@ class Setup_Product {
 
 			$new_attribute = new \WC_Product_Attribute();
 
-			$new_attribute->set_id(0);
-			$new_attribute->set_name(wc_attribute_taxonomy_slug($attribute['name']));
+			$new_attribute->set_id( 0 );
+			$new_attribute->set_name( wc_attribute_taxonomy_slug( $attribute['name'] ) );
 
-			if($attribute['position']){
-				$new_attribute->set_position($attribute['position']);
+			if ( $attribute['position'] ) {
+				$new_attribute->set_position( $attribute['position'] );
 			}
 
-			if($attribute['visible']){
-				$new_attribute->set_visible($attribute['visible']);
+			if ( $attribute['visible'] ) {
+				$new_attribute->set_visible( $attribute['visible'] );
 			}
 
-			if($attribute['variation']){
-				$new_attribute->set_variation($attribute['variation']);
+			if ( $attribute['variation'] ) {
+				$new_attribute->set_variation( $attribute['variation'] );
 			}
 
 			/*$options = [];
@@ -167,7 +181,7 @@ class Setup_Product {
 					'name', 'term_id');
 			}*/
 
-			$new_attribute->set_options($attribute['options']);
+			$new_attribute->set_options( $attribute['options'] );
 
 			$new_attributes[] = $new_attribute;
 
@@ -252,7 +266,9 @@ class Setup_Product {
 		return $new_attributes;
 	}
 
-	public function set_downloadable_info() {
+
+	public function set_downloadable_info(): void {
+
 		if ( ! isset( $this->data['downloadable'] ) ) {
 			return;
 		}
@@ -267,8 +283,9 @@ class Setup_Product {
 			$this->product->set_download_expiry( $this->data['download_expiry'] );
 		}
 
-		if ( $this->data['downloadable'] === true &&
-		     isset( $this->data['downloads'] ) ) {
+		if ( $this->data['downloadable'] === true
+		     && isset( $this->data['downloads'] )
+		) {
 			$downloads = [];
 
 			/**
@@ -288,12 +305,14 @@ class Setup_Product {
 		}
 	}
 
+
 	protected function create_download( $data ) {
+
 		$download = new \WC_Product_Download();
 
 		$attachment_id = Helper::get_attachment_id_by_url( $data['file'] );
 
-		if ( ! $attachment_id || $attachment_id === 0 ) {
+		if ( $attachment_id === 0 ) {
 			$attachment_id = Helper::upload_image_to_library( $data );
 		}
 
@@ -311,7 +330,9 @@ class Setup_Product {
 		return $download;
 	}
 
-	public function set_reviews_info() {
+
+	public function set_reviews_info(): void {
+
 		if ( isset( $this->data['reviews_allowed'] ) ) {
 			$this->product->set_reviews_allowed( $this->data['reviews_allowed'] );
 		}
@@ -321,13 +342,14 @@ class Setup_Product {
 		}
 	}
 
-	public function set_images_info() {
+
+	public function set_images_info(): void {
+
 		if ( isset( $this->data['image'] ) ) {
 			$this->product->set_image_id(
 				$this->setup_image( $this->data['image'] )
 			);
 		}
-
 
 		if ( isset( $this->data['gallery_images_ids'] ) ) {
 			$this->product->set_gallery_image_ids( [] );
@@ -349,14 +371,15 @@ class Setup_Product {
 		}
 	}
 
+
 	/**
-	 * @param array $image
+	 * @param  array $image
 	 *
-	 * @return false|int|string|\WP_Error
+	 * @return int|\WP_Error
 	 */
 	protected function setup_image( array $image ) {
-		$image_id = Helper::get_attachment_id_by_url( $image['src'] );
 
+		$image_id = Helper::get_attachment_id_by_url( $image['src'] );
 
 		if ( $image_id && $image_id !== 0 ) {
 			$image['id'] = $image_id;
@@ -368,7 +391,9 @@ class Setup_Product {
 		return $image_id;
 	}
 
-	public function set_linked_products() {
+
+	public function set_linked_products(): void {
+
 		if ( isset( $this->data['upsell_ids'] ) ) {
 			// TODO: If is string create array from string
 			if ( ! is_array( $this->data['upsell_ids'] ) ) {
@@ -386,11 +411,11 @@ class Setup_Product {
 
 			$this->product->set_cross_sell_ids( $this->data['cross_sell_ids'] );
 		}
-		//TODO: create function for set "related products"
 
 	}
 
-	public function set_shipping_info() {
+
+	public function set_shipping_info(): void {
 
 		if ( isset( $this->data['purchase_note'] ) ) {
 			$this->product->set_purchase_note( $this->data['purchase_note'] );
@@ -399,7 +424,6 @@ class Setup_Product {
 		/**
 		 * TODO: Написать функционал что бы менять айди класса, по имени класса
 		 */
-
 		if ( isset( $this->data['shipping_class_id'] ) ) {
 			$this->product->set_shipping_class_id( $this->data['shipping_class_id'] );
 		}
@@ -422,7 +446,8 @@ class Setup_Product {
 
 	}
 
-	public function set_stock_info() {
+
+	public function set_stock_info(): void {
 
 		if ( isset( $this->data['manage_stock'] ) ) {
 			$this->product->set_manage_stock( $this->data['manage_stock'] ); // Set Product Manage Stock Status (bool)
@@ -450,16 +475,17 @@ class Setup_Product {
 
 	}
 
-	public function set_taxes_info() {
+
+	public function set_taxes_info(): void {
 
 		if ( isset( $this->data['tax_status'] ) ) {
-			$statuses = array(
+			$statuses = [
 				'taxable',
 				'shipping',
 				'none',
-			);
+			];
 
-			if ( ! in_array( $this->data['tax_status'], $statuses ) ) {
+			if ( ! in_array( $this->data['tax_status'], $statuses, true ) ) {
 				$this->data['tax_status'] = 'none';
 			}
 
@@ -472,7 +498,8 @@ class Setup_Product {
 
 	}
 
-	public function set_price_info() {
+
+	public function set_price_info(): void {
 
 		if ( isset( $this->data['price'] ) ) {
 			$this->product->set_price( $this->data['price'] ); // Set Product Price
@@ -496,10 +523,11 @@ class Setup_Product {
 
 	}
 
+
 	/**
 	 * Set General Product Data
 	 */
-	public function set_general_info() {
+	public function set_general_info(): void {
 
 		if ( isset( $this->data['slug'] ) ) {
 			$this->product->set_slug( $this->data['slug'] ); // Setup product name from $data
@@ -530,8 +558,10 @@ class Setup_Product {
 		}
 
 		if ( isset( $this->data['sku'] ) ) {
-//		$this->product->set_sku( $this->data['sku'] ); // Set Product SKU
-			$this->product->set_sku( rand( 1, 9999999 ) ); // Set Product SKU
+			$this->product->set_sku( $this->data['sku'] ); // Set Product SKU
+
+		} else {
+			$this->product->set_sku( \Ainsys\Connector\Master\Helper::random_int( 1, 999999 ) );
 		}
 
 		if ( isset( $this->data['menu_order'] ) ) {
@@ -545,7 +575,9 @@ class Setup_Product {
 		/**
 		 * TODO: Maybe not needed?? (total sales)
 		 */
-//		$this->product->set_total_sales( $this->data['total_sales'] ); // Set total sales
+		if ( isset( $this->data['total_sales'] ) ) {
+			$this->product->set_total_sales( $this->data['total_sales'] ); // Set total sales
+		}
 
 	}
 

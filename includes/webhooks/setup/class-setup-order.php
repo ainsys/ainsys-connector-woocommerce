@@ -1,6 +1,6 @@
 <?php
 
-namespace Ainsys\Connector\Woocommerce\Webhooks;
+namespace Ainsys\Connector\Woocommerce\Webhooks\Setup;
 
 use Ainsys\Connector\Woocommerce\Helper;
 
@@ -37,7 +37,7 @@ class Setup_Order {
 
 	protected function setup_default_data(){
 
-		if(isset($this->data['status']) && Helper::is_valide_order_status($this->data['status'])){
+		if(isset($this->data['status']) && Helper::is_valid_order_status($this->data['status'])){
 			$this->order->set_status($this->data['status']);
 		}
 

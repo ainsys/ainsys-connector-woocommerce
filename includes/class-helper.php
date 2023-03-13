@@ -3,22 +3,31 @@
 namespace Ainsys\Connector\Woocommerce;
 
 use Ainsys\Connector\Master\Plugin_Common;
+use WC_Product_External;
+use WC_Product_Grouped;
+use WC_Product_Simple;
+use WC_Product_Variable;
 
 class Helper {
 
 	use Plugin_Common;
 
-	public static function get_attribute_id_by_slug($slug){
+	/**
+	 * @param $slug
+	 *
+	 * @return int
+	 */
+	public static function get_attribute_id_by_slug( $slug ): int {
 
-		$slug = str_replace('pa_', '', $slug);
+		$slug = str_replace( 'pa_', '', $slug );
 
 		$attributes = wc_get_attribute_taxonomies();
 
 		$id = 0;
 
-		foreach($attributes as $key => $attribute){
+		foreach ( $attributes as $key => $attribute ) {
 
-			if($attribute->attribute_name == $slug){
+			if ( $attribute->attribute_name === $slug ) {
 				$id = $attribute->attribute_id;
 				break;
 			}
@@ -29,38 +38,38 @@ class Helper {
 
 	}
 
+
 	/**
-	 * @param $term
-	 * @param string $taxonomy
+	 * @param         $term
+	 * @param  string $taxonomy
 	 *
-	 * @return false|int
+	 * @return int
 	 */
-	public static function get_term_id($term, $taxonomy = 'product_cat'){
+	public static function get_term_id( $term, string $taxonomy = 'product_cat' ): int {
 
-		if(term_exists($term['slug'])){
-			$term_id = get_term_by('slug', $term['slug'], $taxonomy)->term_id;
-			return $term_id;
+		if ( term_exists( $term['slug'] ) ) {
+			return get_term_by( 'slug', $term['slug'], $taxonomy )->term_id;
 		}
 
-		if(term_exists($term['name'])){
-			$term_id = get_term_by('name', $term['name'], $taxonomy)->term_id;
-			return $term_id;
+		if ( term_exists( $term['name'] ) ) {
+			return get_term_by( 'name', $term['name'], $taxonomy )->term_id;
 		}
 
-		return false;
+		return 0;
 
 	}
+
 
 	/**
 	 * @param $status
 	 *
 	 * @return bool
 	 */
-	public static function is_valide_order_status($status){
+	public static function is_valid_order_status( $status ): bool {
 
 		$statuses = wc_get_order_statuses();
 
-		if(array_key_exists($status, $statuses)){
+		if ( array_key_exists( $status, $statuses ) ) {
 			return true;
 		}
 
@@ -68,51 +77,35 @@ class Helper {
 
 	}
 
+
 	/**
-	 * @param $status
+	 * Format term value from - to
 	 *
-	 * @return bool
-	 */
-	public static function is_valide_order_status($status){
-
-		$statuses = wc_get_order_statuses();
-
-		if(array_key_exists($status, $statuses)){
-			return true;
-		}
-
-		return false;
-
-	}
-
-	/**
-	 * @param $term
+	 * @param $term_value
 	 * @param $taxonomy
 	 * @param $from
 	 * @param $to
 	 *
 	 * @return int|string
-	 * Format term value from - to
 	 */
-	public static function format_term_value($term_value, $taxonomy, $from, $to){
+	public static function format_term_value( $term_value, $taxonomy, $from, $to ) {
 
-		$return = '';
 
-		if(empty($term_value) || empty($taxonomy)){
-			return $return;
+		if ( empty( $term_value ) || empty( $taxonomy ) ) {
+			return '';
 		}
 
-		if(strpos( $taxonomy, 'attribute_' ) !== false){
-			$taxonomy = str_replace('attribute_', '', $taxonomy);
+		if ( strpos( $taxonomy, 'attribute_' ) !== false ) {
+			$taxonomy = str_replace( 'attribute_', '', $taxonomy );
 		}
 
-		$term = get_term_by($from, $term_value, $taxonomy, $to);
+		$term = get_term_by( $from, $term_value, $taxonomy, $to );
 
-		if(!$term){
-			return $return;
+		if ( ! $term ) {
+			return '';
 		}
 
-		switch ($to){
+		switch ( $to ) {
 			case 'slug' :
 				$return = $term->slug;
 				break;
@@ -121,12 +114,14 @@ class Helper {
 				$return = $term->name;
 				break;
 
+			case 'term_id':
 			case 'id' :
 				$return = $term->term_id;
 				break;
 
-			case 'term_id' :
-				$return = $term->term_id;
+			default:
+				$return = '';
+				break;
 
 		}
 
@@ -134,108 +129,102 @@ class Helper {
 
 	}
 
-	public static function setup_product_type($type){
 
-		$product = '';
+	/**
+	 * @param $type
+	 *
+	 * @return \WC_Product_External|\WC_Product_Grouped|\WC_Product_Simple|\WC_Product_Variable
+	 *
+	 * @todo Не понял зачем этот метод если он вызывается один раз, занести его туда где вызывается?
+	 */
+	public static function get_product_type( $type ) {
 
-		switch ( $type ) {
-			case 'simple' :
-				$product = new \WC_Product_Simple();
-				break;
-
-			case 'variable' :
-				$product = new \WC_Product_Variable();
-				break;
-
-			case 'external' :
-				$product = new \WC_Product_External();
-				break;
-
-			case 'grouped' :
-				$new_product = new \WC_Product_Grouped();
-				break;
-			default:
-
-				$product = '';
+		if ( 'variable' === $type ) {
+			return new WC_Product_Variable();
 		}
 
-		return $product;
+		if ( 'external' === $type ) {
+			return new WC_Product_External();
+		}
+
+		if ( 'grouped' === $type ) {
+			return new WC_Product_Grouped();
+		}
+
+		return new WC_Product_Simple();
+
 
 	}
 
+
 	/**
-	 * Checks if the woocommerce plugin is active.
+	 * Create new product_cat taxonomy term
 	 *
-	 * @return bool
-	 */
-	public function is_woocommerce_active() {
-		return $this->is_plugin_active( 'woocommerce/woocommerce.php' );
-	}
-
-	/**
-	 * @param $term
-	 * @param string $taxonomy
+	 * @param         $term
+	 * @param  string $taxonomy
 	 *
 	 * @return array|int[]|\WP_Error
-	 * Create new product_cat taxonomy term
 	 */
-	public static function add_term( $term, $taxonomy = 'product_cat') {
+	public static function add_term( $term, string $taxonomy = 'product_cat' ) {
 
 
 		$args = [];
 
-		if(is_array($term)){
+		if ( is_array( $term ) ) {
 
 			$term_name = $term['name'];
 
-			if(isset($term['slug'])){
+			if ( isset( $term['slug'] ) ) {
 				$args['slug'] = $term['slug'];
 			}
 
-			if(isset($term['description'])){
+			if ( isset( $term['description'] ) ) {
 				$args['description'] = $term['description'];
 			}
 
-			if($term['parent'] != 0 && !empty($term['parent'])){
+			if ( $term['parent'] !== 0 && ! empty( $term['parent'] ) ) {
 				$args['parent'] = $term['parent'];
 			}
-		}else{
+		} else {
 			$term_name = $term;
 		}
 
 		return wp_insert_term( $term_name, $taxonomy, $args );
 	}
 
+
 	/**
-	 * @param $term
-	 * @param string $taxonomy
+	 * Update product_cat taxonomy term
+	 *
+	 * @param         $term
+	 * @param  string $taxonomy
+	 * @param  string $get_term_by
 	 *
 	 * @return array|object|\WP_Error|\WP_Term|null|false
-	 * Update product_cat taxonomy term
 	 */
-	public static function update_term( $term, $taxonomy = 'product_cat', $get_term_by = 'name' ) {
+	public static function update_term( $term, string $taxonomy = 'product_cat', string $get_term_by = 'name' ) {
 
-		$term_id = Helper::get_term_id($term, $taxonomy);
+		$term_id = self::get_term_id( $term, $taxonomy );
 
-		if(!is_array($term)){
-			$term = get_term_by($get_term_by, $term, $taxonomy, ARRAY_A);
+		if ( ! is_array( $term ) ) {
+			$term = get_term_by( $get_term_by, $term, $taxonomy, ARRAY_A );
 
-			if(is_wp_error($term)){
+			if ( is_wp_error( $term ) ) {
 				return false;
 			}
 
 		}
 
 		$args = [
-			'name'        => $term['name'],
-			'slug'        => $term['slug'],
+			'name' => $term['name'],
+			'slug' => $term['slug'],
 		];
 
-		if(isset($term['description'])){
+		if ( isset( $term['description'] ) ) {
 			$args['description'] = $term['description'];
 		}
 
-		if($term['parent'] != 0 && !empty($term['parent'])){
+		if ( $term['parent'] !== 0 && ! empty( $term['parent'] ) ) {
 			$args['parent'] = $term['parent'];
 		}
 
@@ -246,20 +235,20 @@ class Helper {
 		);
 	}
 
+
 	/**
 	 * @param $attr_key
 	 * @param $attribute
 	 *
 	 * @return int|\WP_Error
+	 *
+	 * @todo почему метод не статический?
+	 * @todo выхывается один раз, точно тут нужен? Может занечти туда где вызывается?
 	 */
 	public function create_attribute_taxonomy( $attr_key, $attribute ) {
 
 		$name                 = str_replace( 'pa_', '', $attr_key );
 		$attribute_taxonomies = wc_get_attribute_taxonomies();
-
-		/*$attribute_tax = register_taxonomy($attr_key, 'product', [
-			'label' => $attribute['name'],
-		]);*/
 
 		$slug          = wc_sanitize_taxonomy_name( $name );
 		$taxonomy_name = wc_attribute_taxonomy_name( $name );
@@ -269,7 +258,6 @@ class Helper {
 		if ( ! in_array( $attribute_name, $attribute_taxonomies, true ) ) {
 			$attribute_id = wc_create_attribute(
 				[
-//					'name'         => $name,
 					'name'         => $attribute['attribute_label'],
 					'slug'         => $attribute_name,
 					'type'         => 'select',
@@ -279,18 +267,20 @@ class Helper {
 			);
 		}
 
-		if(!is_wp_error($attribute_id)){
+		if ( ! is_wp_error( $attribute_id ) ) {
 
 			register_taxonomy(
 				$taxonomy_name,
-				apply_filters( 'woocommerce_taxonomy_objects_' . $taxonomy_name, array( 'product' ) ),
-				apply_filters( 'woocommerce_taxonomy_args_' . $taxonomy_name,
-				               array(
-					               'hierarchical' => true,
-					               'show_ui'      => false,
-					               'query_var'    => true,
-					               'rewrite'      => false,
-				               ) )
+				apply_filters( 'woocommerce_taxonomy_objects_' . $taxonomy_name, [ 'product' ] ),
+				apply_filters(
+					'woocommerce_taxonomy_args_' . $taxonomy_name,
+					[
+						'hierarchical' => true,
+						'show_ui'      => false,
+						'query_var'    => true,
+						'rewrite'      => false,
+					]
+				)
 			);
 
 		}
@@ -301,6 +291,7 @@ class Helper {
 		return $attribute_id;
 	}
 
+
 	/**
 	 * @param $attr_key
 	 *
@@ -309,31 +300,35 @@ class Helper {
 	 * Return answer, is attribute individual or based on taxonomy
 	 */
 	public function is_taxonomy_attribute( $attr_key ) {
+
 		return strpos( $attr_key, 'pa_' ) !== false;
 	}
 
+
 	/**
+	 * Check if Attribute taxonomy already exist
+	 *
 	 * @param $attr_key
 	 *
 	 * @return bool
-	 * Check if Attribute taxonomy already exist
 	 */
-	public function attribute_taxonomy_exist( $attr_key ) {
+	public function attribute_taxonomy_exist( $attr_key ): bool {
 
 		$attributes = wc_get_attribute_taxonomies();
 		$slugs      = wp_list_pluck( $attributes, 'attribute_name' );
 
-		return in_array( str_replace( 'pa_', '', sanitize_title($attr_key) ), $slugs );
+		return in_array( str_replace( 'pa_', '', sanitize_title( $attr_key ) ), $slugs, true );
 
 	}
 
-	public static function format_term_id_to_name($term_id, $taxonomy){
+
+	public static function format_term_id_to_name( $term_id, $taxonomy ) {
 
 		$term_name = '';
 
-		$term = get_term_by('id', $term_id, $taxonomy);
+		$term = get_term_by( 'id', $term_id, $taxonomy );
 
-		if(is_object($term)){
+		if ( is_object( $term ) ) {
 			$term_name = $term->name;
 		}
 
@@ -341,53 +336,29 @@ class Helper {
 
 	}
 
+
 	/**
+	 * Check by url if image exists in media library
+	 *
 	 * @param $url
 	 *
-	 * @return bool
+	 * @return int
 	 *
-	 * Check by url if image exists in media library
+
 	 */
-	public static function get_attachment_id_by_url( $url ) {
+	public static function get_attachment_id_by_url( $url ): int {
 
-		return attachment_url_to_postid($url);
-
-
-		/*$dir = wp_upload_dir();
-
-		if ( false !== strpos( $url, $dir['baseurl'] . '/' ) ) { // Is URL in uploads directory?
-
-			$file = basename( $url );
-
-			$query_args = array(
-				'post_type'   => 'attachment',
-				'post_status' => 'inherit',
-				'fields'      => 'ids',
-				'meta_query'  => array(
-					array(
-						'value'   => $file,
-						'compare' => 'LIKE',
-						'key'     => '_wp_attachment_metadata',
-					),
-				)
-			);
-
-			$query = new \WP_Query( $query_args );
-
-			if ( $query->have_posts() ) {
-				return true;
-			}
-		}
-
-		return false;*/
+		return attachment_url_to_postid( $url );
 	}
 
+
 	/**
+	 * Upload images to WordPress media gallery
+	 *
 	 * @param $image
 	 *
 	 * @return false|int|\WP_Error
 	 *
-	 * Upload images to Wordpress media gallery
 	 */
 	public static function upload_image_to_library( $image ) {
 
@@ -407,17 +378,18 @@ class Helper {
 		}
 
 		// move the temp file into the uploads directory
-		$file     = array(
+		$file = [
 			'name'     => basename( $image_url ),
 			'type'     => mime_content_type( $temp_file ),
 			'tmp_name' => $temp_file,
 			'size'     => filesize( $temp_file ),
-		);
+		];
+
 		$sideload = wp_handle_sideload(
 			$file,
-			array(
-				'test_form' => false
-			)
+			[
+				'test_form' => false,
+			]
 		);
 
 		if ( ! empty( $sideload['error'] ) ) {
@@ -425,13 +397,13 @@ class Helper {
 		}
 
 		$attachment_id = wp_insert_attachment(
-			array(
+			[
 				'guid'           => $sideload['url'],
 				'post_mime_type' => $sideload['type'],
 				'post_title'     => basename( $sideload['file'] ),
 				'post_content'   => '',
 				'post_status'    => 'inherit',
-			),
+			],
 			$sideload['file']
 		);
 
@@ -446,21 +418,24 @@ class Helper {
 			wp_generate_attachment_metadata( $attachment_id, $sideload['file'] )
 		);
 
-		$update_meta = ( isset( $image['file'] ) ) ? false : Helper::update_image_metadata( $image );
+		$update_meta = ( isset( $image['file'] ) ) ? false : self::update_image_metadata( $image );
 
 		return $attachment_id;
 	}
 
+
 	/**
-	 * @param array $image
-	 *
-	 * @return false|int|\WP_Error
-	 *
 	 * Update image metadata
+	 *
+	 * @param  array $image
+	 *
+	 * @return int|\WP_Error
+	 *
 	 */
 	public static function update_image_metadata( array $image ) {
-		if ( empty( $image ) || ! is_array( $image ) ) {
-			return false;
+
+		if ( empty( $image ) ) {
+			return 0;
 		}
 
 		$id = $image['id'];
@@ -468,13 +443,15 @@ class Helper {
 		$attachment = get_post( $id );
 
 		if ( ! $attachment ) {
-			return false;
+			return 0;
 		}
 
 		$update_data = [];
 
 		if ( isset( $image['alt'] ) ) {
-			update_post_meta( $id, '_wp_attachment_image_alt', $image['alt'] );
+			$update_data['meta_input'] = [
+				'_wp_attachment_image_alt' => $image['alt'],
+			];
 		}
 
 		if ( isset( $image['caption'] ) ) {

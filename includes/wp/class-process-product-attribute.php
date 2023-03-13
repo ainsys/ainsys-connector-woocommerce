@@ -6,12 +6,12 @@ use Ainsys\Connector\Master\Conditions;
 use Ainsys\Connector\Master\Hooked;
 use Ainsys\Connector\Master\Logger;
 use Ainsys\Connector\Master\WP\Process;
-use Ainsys\Connector\Woocommerce\Prepare_Product_Attribute_Data;
-use Ainsys\Connector\Woocommerce\Prepare_Product_Cat_Data;
+use Ainsys\Connector\Woocommerce\WP\Prepare\Prepare_Product_Attribute;
 
-class Process_Product_Attribute extends Process implements Hooked{
+class Process_Product_Attribute extends Process implements Hooked {
 
 	protected static string $entity = 'product_attribute';
+
 
 	/**
 	 * Initializes WordPress hooks for plugin/components.
@@ -20,14 +20,26 @@ class Process_Product_Attribute extends Process implements Hooked{
 	 */
 	public function init_hooks() {
 
-		add_action('create_term', [$this, 'process_create'], 10, 4);
-		add_action('delete_term', [$this, 'process_delete'], 10, 5);
-		add_action('edited_term', [$this, 'process_update'], 10, 4);
-		add_action('woocommerce_attribute_added', [$this, 'attribute_created'], 10, 2);
+		add_action( 'create_term', [ $this, 'process_create' ], 10, 4 );
+		add_action( 'edited_term', [ $this, 'process_update' ], 10, 4 );
+		add_action( 'delete_term', [ $this, 'process_delete' ], 10, 5 );
+
+		add_action( 'woocommerce_attribute_added', [ $this, 'attribute_create' ], 10, 2 );
+		add_action( 'woocommerce_attribute_updated', [ $this, 'attribute_update' ], 10, 2 );
+		add_action( 'woocommerce_attribute_deleted', [ $this, 'attribute_delete' ], 10, 3 );
 
 	}
 
-	public function attribute_created($id, $data){
+
+	/**
+	 * Sends new Product Category details to AINSYS
+	 *
+	 * @param $term_id
+	 * @param $tt_id
+	 * @param $taxonomy
+	 * @param $args
+	 */
+	public function process_create( $term_id, $tt_id, $taxonomy, $args ): void {
 
 		self::$action = 'CREATE';
 
@@ -35,22 +47,28 @@ class Process_Product_Attribute extends Process implements Hooked{
 			return;
 		}
 
+		if ( wc_attribute_taxonomy_id_by_name( $taxonomy ) === 0 ) {
+			return;
+		}
+
 		$fields = apply_filters(
 			'ainsys_process_create_fields_' . self::$entity,
-			$this->prepare_data($data),
-			$id, $data
+			$this->prepare_data( $term_id, $taxonomy ),
+			$term_id
 		);
 
-		$this->send_data( $id, self::$entity, self::$action, $fields );
+		$this->send_data( $term_id, self::$entity, self::$action, $fields );
 
 	}
 
+
 	/**
+	 * Sends updated Product Cat details to AINSYS.
+	 *
 	 * @param $term_id
 	 * @param $tt_id
+	 * @param $taxonomy
 	 * @param $args
-	 *
-	 * Sends updated Product Cat details to AINSYS.
 	 */
 	public function process_update( $term_id, $tt_id, $taxonomy, $args ): void {
 
@@ -60,26 +78,28 @@ class Process_Product_Attribute extends Process implements Hooked{
 			return;
 		}
 
-		if(wc_attribute_taxonomy_id_by_name($taxonomy) === 0){
+		if ( wc_attribute_taxonomy_id_by_name( $taxonomy ) === 0 ) {
 			return;
 		}
 
 		$fields = apply_filters(
 			'ainsys_process_update_fields_' . self::$entity,
-			$this->prepare_data($term_id, $taxonomy),
+			$this->prepare_data( $term_id, $taxonomy ),
 			$term_id
 		);
 
 		$this->send_data( $term_id, self::$entity, self::$action, $fields );
 	}
 
+
 	/**
+	 * Sends delete post details to AINSYS
+	 *
 	 * @param $term
 	 * @param $tt_id
+	 * @param $taxonomy
 	 * @param $deleted_term
 	 * @param $object_ids
-	 *
-	 * Sends delete post details to AINSYS
 	 */
 	public function process_delete( $term, $tt_id, $taxonomy, $deleted_term, $object_ids ): void {
 
@@ -89,7 +109,7 @@ class Process_Product_Attribute extends Process implements Hooked{
 			return;
 		}
 
-		if(wc_attribute_taxonomy_id_by_name($taxonomy) === 0){
+		if ( wc_attribute_taxonomy_id_by_name( $taxonomy ) === 0 ) {
 			return;
 		}
 
@@ -103,14 +123,8 @@ class Process_Product_Attribute extends Process implements Hooked{
 
 	}
 
-	/**
-	 * @param $term_id
-	 * @param $tt_id
-	 * @param $args
-	 *
-	 * Sends new Product Category details to AINSYS
-	 */
-	public function process_create( $term_id, $tt_id, $taxonomy, $args ): void {
+
+	public function attribute_create( $id, $data ): void {
 
 		self::$action = 'CREATE';
 
@@ -118,38 +132,62 @@ class Process_Product_Attribute extends Process implements Hooked{
 			return;
 		}
 
-		if(wc_attribute_taxonomy_id_by_name($taxonomy) === 0){
-			Logger::save([
-				             'object_id'       => 0,
-				             'entity'          => self::$entity,
-				             'request_action'  => self::$action,
-				             'request_type'    => 'outgoing',
-				             'request_data'    => serialize( [$term_id, $tt_id, $taxonomy] ),
-				             'error'           => 1,
-			             ]);
+		$fields = apply_filters(
+			'ainsys_process_create_fields_' . self::$entity,
+			$this->prepare_data( $data ),
+			$id, $data
+		);
+
+		$this->send_data( $id, self::$entity, self::$action, $fields );
+
+	}
+
+
+	public function attribute_update( $id, $data ): void {
+
+		self::$action = 'UPDATE';
+
+		if ( Conditions::has_entity_disable( self::$entity, self::$action ) ) {
 			return;
 		}
 
 		$fields = apply_filters(
-			'ainsys_process_create_fields_' . self::$entity,
-			$this->prepare_data($term_id, $taxonomy),
-			$term_id
+			'ainsys_process_update_fields_' . self::$entity,
+			$this->prepare_data( $data ),
+			$id
 		);
 
-		$this->send_data( $term_id, self::$entity, self::$action, $fields );
-
+		$this->send_data( $id, self::$entity, self::$action, $fields );
 	}
+
+
+	public function attribute_delete( $id, $attribute_name, $taxonomy ): void {
+
+		self::$action = 'DELETE';
+
+		if ( Conditions::has_entity_disable( self::$entity, self::$action ) ) {
+			return;
+		}
+
+		$fields = apply_filters(
+			'ainsys_process_update_fields_' . self::$entity,
+			$this->prepare_data( $id, $taxonomy ),
+			$id
+		);
+
+		$this->send_data( $id, self::$entity, self::$action, $fields );
+	}
+
 
 	/**
 	 * Sends updated post details to AINSYS.
 	 *
 	 * @param       $attribute_id
 	 * @param       $attribute
-	 * @param       $update
 	 *
 	 * @return array
 	 */
-	public function process_checking( $attribute_id, $attribute, $update ): array {
+	public function process_checking( $attribute_id, $attribute ): array {
 
 		self::$action = 'CHECKING';
 
@@ -157,13 +195,9 @@ class Process_Product_Attribute extends Process implements Hooked{
 			return [];
 		}
 
-		if ( !array_key_exists('attribute_id', $attribute) ) {
-			return [];
-		}
-
 		$fields = apply_filters(
 			'ainsys_process_update_fields_' . self::$entity,
-			$this->prepare_data($attribute),
+			$this->prepare_data( $attribute ),
 			$attribute_id
 		);
 
@@ -171,23 +205,23 @@ class Process_Product_Attribute extends Process implements Hooked{
 
 	}
 
+
 	/**
-	 * @param $attribute
-	 *
-	 * @return array|mixed|void
 	 * Prepare product data, for send to AINSYS
+	 *
+	 * @param         $attribute
+	 * @param  string $taxonomy
+	 *
+	 * @return array
 	 */
-	public function prepare_data( $attribute, $taxonomy = ''){
+	public function prepare_data( $attribute, string $taxonomy = '' ): array {
 
-		$data = [];
-
-		if(is_int($attribute)){
+		if ( is_int( $attribute ) ) {
 
 			$attributes = wc_get_attribute_taxonomies();
 
-			foreach($attributes as $attr_key => $single_attribute){
-
-				if($single_attribute->attribute_name == wc_attribute_taxonomy_slug($taxonomy)){
+			foreach ( $attributes as $attr_key => $single_attribute ) {
+				if ( $single_attribute->attribute_name === wc_attribute_taxonomy_slug( $taxonomy ) ) {
 					$attribute = $single_attribute;
 					break;
 				}
@@ -196,10 +230,7 @@ class Process_Product_Attribute extends Process implements Hooked{
 
 		}
 
-		$prepare = new Prepare_Product_Attribute_Data($attribute);
-		$data = $prepare->prepare_data();
-
-		return $data;
+		return ( new Prepare_Product_Attribute( $attribute ) )->prepare_data();
 
 	}
 

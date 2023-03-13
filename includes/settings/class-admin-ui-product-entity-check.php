@@ -2,6 +2,7 @@
 
 namespace Ainsys\Connector\Woocommerce\Settings;
 
+use Ainsys\Connector\Master\Helper;
 use Ainsys\Connector\Master\Hooked;
 use Ainsys\Connector\Master\Settings\Settings;
 use Ainsys\Connector\Woocommerce\WP\Process_Products;
@@ -9,13 +10,10 @@ use Ainsys\Connector\Master\Settings\Admin_UI_Entities_Checking;
 
 class Admin_Ui_Product_Entity_Check implements Hooked {
 
-	protected $process;
+	static public string $entity = 'product';
 
-	static public $entity = 'product';
 
 	public function init_hooks() {
-
-		$this->process = new Process_Products();
 
 		/**
 		 * Check entity connection for products
@@ -24,53 +22,51 @@ class Admin_Ui_Product_Entity_Check implements Hooked {
 
 	}
 
+
 	/**
-	 * @param $result_entity
-	 * @param $entity
-	 * @param $make_request
+	 * Check "product" entity filter callback
+	 *
+	 * @param                                                               $result_entity
+	 * @param                                                               $entity
+	 * @param  \Ainsys\Connector\Master\Settings\Admin_UI_Entities_Checking $entities_checking
 	 *
 	 * @return mixed
-	 * Check "product" entity filter callback
 	 */
-	public function check_product_entity( $result_entity, $entity, Admin_UI_Entities_Checking $entities_checking) {
+	public function check_product_entity( $result_entity, $entity, Admin_UI_Entities_Checking $entities_checking ) {
 
 		if ( $entity !== self::$entity ) {
 			return $result_entity;
 		}
 
-		$entities_checking->make_request = false;
+		$entities_checking->make_request = true;
+
 		$result_test   = $this->get_product();
 		$result_entity = Settings::get_option( 'check_connection_entity' );
 
-		return $entities_checking->get_result_entity($result_test, $result_entity, $entity);
+		return $entities_checking->get_result_entity( $result_test, $result_entity, $entity );
 
 	}
 
+
 	/**
-	 * @return array|false
-	 *
 	 * Get product data for AINSYS
 	 *
+	 * @return array
 	 */
+	protected function get_product(): array {
 
-	private function get_product() {
+		$product_ids = Helper::get_rand_posts( self::$entity );
 
-		$args = array(
-			'limit' => 1,
-		);
-
-		$products = wc_get_products( $args );
-
-		if ( ! empty( $products ) ) {
-
-			$product    = end( $products );
-			$product_id = $product->get_id();
-
-			return $this->process->process_checking( $product_id, $product, true );
-
-		} else {
-			return false;
+		if ( empty( $product_ids ) ) {
+			return [
+				'request'  => __( 'Error: There is no data to check.', AINSYS_CONNECTOR_TEXTDOMAIN ),
+				'response' => __( 'Error: There is no data to check.', AINSYS_CONNECTOR_TEXTDOMAIN ),
+			];
 		}
+
+		$product_id = reset( $product_ids );
+
+		return ( new Process_Products )->process_checking( (int) $product_id );
 
 	}
 

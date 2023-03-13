@@ -1,6 +1,6 @@
 <?php
 
-namespace Ainsys\Connector\Woocommerce\Webhooks;
+namespace Ainsys\Connector\Woocommerce\Webhooks\Setup;
 
 use Ainsys\Connector\Woocommerce\Helper;
 
