@@ -8,6 +8,7 @@ use Ainsys\Connector\Master\Webhook_Handler;
 use Ainsys\Connector\Master\Webhooks\Handle;
 use Ainsys\Connector\Woocommerce\Helper;
 use Ainsys\Connector\Woocommerce\Webhooks\Setup\Setup_Product;
+use Ainsys\Connector\Woocommerce\Webhooks\Setup\Setup_Product_Variation;
 use WC_Product_Variation;
 
 class Handle_Product extends Handle implements Hooked, Webhook_Handler {

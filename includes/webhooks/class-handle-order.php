@@ -8,6 +8,7 @@ use Ainsys\Connector\Master\Logger;
 use Ainsys\Connector\Master\Webhook_Handler;
 use Ainsys\Connector\Master\Webhooks\Handle;
 use Ainsys\Connector\Woocommerce\Helper;
+use Ainsys\Connector\Woocommerce\Webhooks\Setup\Setup_Order;
 
 class Handle_Order extends Handle implements Hooked, Webhook_Handler {
 
