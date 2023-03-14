@@ -126,7 +126,7 @@ class Process_Products extends Process implements Hooked {
 			return;
 		}
 
-		if ( ! in_array( get_post_type( $product_id ), [ self::$entity, 'product_variation' ], true ) ) {
+if ( ! in_array( get_post_type( $product_id ), [ self::$entity, 'product_variation' ], true ) ) {
 			return;
 		}
 
@@ -137,7 +137,6 @@ class Process_Products extends Process implements Hooked {
 		);
 
 		$this->send_data( $product_id, self::$entity, self::$action, $fields );
-
 	}
 
 
