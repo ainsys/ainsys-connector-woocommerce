@@ -149,7 +149,7 @@ class Process_Products extends Process implements Hooked {
 			return;
 		}
 
-		if ( $_REQUEST['action'] === 'editpost' && did_action( 'woocommerce_update_product' ) > 1 ) {
+		if ( $_REQUEST['action'] === 'editpost' || did_action( 'woocommerce_update_product' ) > 1 ) {
 			return;
 		}
 
