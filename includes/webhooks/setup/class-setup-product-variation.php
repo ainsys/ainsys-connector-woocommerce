@@ -22,7 +22,7 @@ class Setup_Product_Variation extends Setup_Product {
 		 */
 		$this->product->set_parent_id($this->parent_product->get_id());
 
-		$this->product->save();
+		//
 
 		/**
 		 * Setup variation general info
@@ -50,7 +50,7 @@ class Setup_Product_Variation extends Setup_Product {
 		 * Setup variation image
 		 */
 		$this->product->set_image_id(
-			parent::setup_image($this->data['image'])
+			parent::get_image($this->data['image'])
 		);
 
 		/**
@@ -68,12 +68,15 @@ class Setup_Product_Variation extends Setup_Product {
 		 */
 		parent::set_taxes_info();
 
+
+		$this->product->save();
+
 	}
 
 	private function format_variation_attributes(){
 
 		$formatted_attributes = [];
-
+		//error_log( print_r($this->data['attributes'] , 1 ) );
 		if(!empty($this->data['attributes'])){
 
 			foreach($this->data['attributes'] as $attribute_key => $attribute_value){
@@ -81,7 +84,8 @@ class Setup_Product_Variation extends Setup_Product {
 			}
 
 		}
-
+		/*error_log( print_r('$formatted_attributes' , 1 ) );
+		error_log( print_r($formatted_attributes , 1 ) );*/
 		return $formatted_attributes;
 
 	}

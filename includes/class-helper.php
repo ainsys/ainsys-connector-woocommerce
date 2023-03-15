@@ -362,7 +362,7 @@ class Helper {
 	 */
 	public static function upload_image_to_library( $image ) {
 
-		if ( ! is_array( $image ) ) {
+		if ( empty( $image ) || ! is_array( $image ) ) {
 			return false;
 		}
 

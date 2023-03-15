@@ -59,24 +59,13 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 		( new Setup_Product( $new_product, $data ) )->setup_product();
 
 		if ( $data['type'] === 'variable' && ! empty( $data['variations'] ) ) {
-			/**
-			 * Need save product to DB before create variations
-			 */
-			$new_product->save();
 
 			foreach ( $data['variations'] as $variation_data ) {
 				$variation = new WC_Product_Variation();
 
-				$setup_variation = new Setup_Product_Variation( $variation, $variation_data, $new_product );
-				$setup_variation->setup_product_variation();
-
-				$variation->save();
+				( new Setup_Product_Variation( $variation, $variation_data, $new_product ) )->setup_product_variation();
 			}
 		}
-
-		$new_product->save();
-
-		//$message = sprintf( __( 'Success: %s creation is done.', AINSYS_CONNECTOR_WOOCOMMERCE_TEXTDOMAIN ), self::$entity . ' ' . $data['name'] );
 
 		return [
 			'id'      => $new_product->get_id(),

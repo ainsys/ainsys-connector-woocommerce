@@ -410,6 +410,7 @@ class Prepare_Product {
 		}
 
 		return [
+			'price'     => (int) $this->product->get_price(),
 			'regular_price'     => (int) $this->product->get_regular_price(),
 			'sale_price'        => (int) $this->product->get_sale_price(),
 			'date_on_sale_from' => $sale_date_from,
