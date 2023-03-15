@@ -22,8 +22,8 @@ class Process_Products extends Process implements Hooked {
 	public function init_hooks() {
 
 		if ( is_admin() ) {
-			add_action( 'wp_after_insert_post', [ $this, 'process_create' ], PHP_INT_MAX, 4 );
-			add_action( 'woocommerce_update_product', [ $this, 'process_update' ], 1010, 2 );
+			add_action( 'wp_after_insert_post', [ $this, 'process_create' ], 1000, 4 );
+			add_action( 'woocommerce_update_product', [ $this, 'process_update' ], PHP_INT_MAX, 2 );
 		} else {
 			add_action( 'woocommerce_after_product_object_save', [ $this, 'process_remote_create' ], PHP_INT_MAX, 2 );
 			add_action( 'woocommerce_update_product', [ $this, 'process_remote_update' ], 1010, 2 );
@@ -109,30 +109,7 @@ class Process_Products extends Process implements Hooked {
 	 */
 	public function process_remote_update( int $product_id, WC_Product $product ): void {
 
-
-		if ( did_action( 'woocommerce_update_product' ) > 1 ) {
-			return;
-		}
-
-		if ( ! $this->is_valid_update( $product ) ) {
-			return;
-		}
-
-		self::$action = 'UPDATE';
-
-		if ( Conditions::has_entity_disable( self::$entity, self::$action ) ) {
-			return;
-		}
-
-		$fields = apply_filters(
-			'ainsys_process_update_fields_' . self::$entity,
-			$this->prepare_data( $product_id ),
-			$product_id
-		);
-
-		$this->send_data( $product_id, self::$entity, self::$action, $fields );
-
-		clean_post_cache( $product_id );
+		$this->set_update( $product, $product_id );
 	}
 
 
@@ -144,34 +121,15 @@ class Process_Products extends Process implements Hooked {
 	 */
 	public function process_update( int $product_id, WC_Product $product ): void {
 
-
 		if ( ! isset( $_REQUEST['action'] ) ) {
 			return;
 		}
 
-		if ( $_REQUEST['action'] === 'editpost' || did_action( 'woocommerce_update_product' ) > 1 ) {
+		if ( $_REQUEST['original_post_status'] === 'auto-draft' ) {
 			return;
 		}
 
-		if ( ! $this->is_valid_update( $product ) ) {
-			return;
-		}
-
-		self::$action = 'UPDATE';
-
-		if ( Conditions::has_entity_disable( self::$entity, self::$action ) ) {
-			return;
-		}
-
-		$fields = apply_filters(
-			'ainsys_process_update_fields_' . self::$entity,
-			$this->prepare_data( $product_id ),
-			$product_id
-		);
-
-		$this->send_data( $product_id, self::$entity, self::$action, $fields );
-
-		clean_post_cache( $product_id );
+		$this->set_update( $product, $product_id );
 	}
 
 
@@ -310,6 +268,40 @@ class Process_Products extends Process implements Hooked {
 	protected function is_valid_update( WC_Product $product ): bool {
 
 		return (bool) $product->get_date_modified();
+	}
+
+
+	/**
+	 * @param  \WC_Product $product
+	 * @param  int         $product_id
+	 *
+	 * @return void
+	 */
+	protected function set_update( WC_Product $product, int $product_id ): void {
+
+		if ( did_action( 'woocommerce_update_product' ) > 1 ) {
+			return;
+		}
+
+		if ( ! $this->is_valid_update( $product ) ) {
+			return;
+		}
+
+		self::$action = 'UPDATE';
+
+		if ( Conditions::has_entity_disable( self::$entity, self::$action ) ) {
+			return;
+		}
+
+		$fields = apply_filters(
+			'ainsys_process_update_fields_' . self::$entity,
+			$this->prepare_data( $product_id ),
+			$product_id
+		);
+
+		$this->send_data( $product_id, self::$entity, self::$action, $fields );
+
+		clean_post_cache( $product_id );
 	}
 
 }
