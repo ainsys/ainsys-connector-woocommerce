@@ -21,11 +21,40 @@ class Process_Products extends Process implements Hooked {
 	 */
 	public function init_hooks() {
 
-		add_action( 'wp_after_insert_post', [ $this, 'process_create' ], 1000, 4 );
-		add_action( 'woocommerce_update_product', [ $this, 'process_update' ], 1010, 2 );
+		if ( is_admin() ) {
+			add_action( 'wp_after_insert_post', [ $this, 'process_create' ], PHP_INT_MAX, 4 );
+			add_action( 'woocommerce_update_product', [ $this, 'process_update' ], 1010, 2 );
+		} else {
+			add_action( 'woocommerce_after_product_object_save', [ $this, 'process_remote_create' ], PHP_INT_MAX, 2 );
+			add_action( 'woocommerce_update_product', [ $this, 'process_remote_update' ], 1010, 2 );
+		}
 
 		add_action( 'deleted_post', [ $this, 'process_delete' ], 10, 2 );
 		add_action( 'trashed_post', [ $this, 'process_trash' ], 10, 1 );
+
+	}
+
+
+	public function process_remote_create( $product, $data_store ): void {
+
+
+		if ( did_action( 'woocommerce_after_product_object_save' ) > 1 || $product->get_date_modified() ) {
+			return;
+		}
+
+		self::$action = 'CREATE';
+
+		if ( Conditions::has_entity_disable( self::$entity, self::$action ) ) {
+			return;
+		}
+
+		$fields = apply_filters(
+			'ainsys_process_create_fields_' . self::$entity,
+			$this->prepare_data( $product->get_id() ),
+			$product->get_id()
+		);
+
+		$this->send_data( $product->get_id(), self::$entity, self::$action, $fields );
 
 	}
 
@@ -41,6 +70,7 @@ class Process_Products extends Process implements Hooked {
 	 * @return void
 	 */
 	public function process_create( int $product_id, $post, bool $update, $post_before ): void {
+
 
 		self::$action = 'CREATE';
 
@@ -77,18 +107,53 @@ class Process_Products extends Process implements Hooked {
 	 * @param  int        $product_id
 	 * @param  WC_Product $product
 	 */
+	public function process_remote_update( int $product_id, WC_Product $product ): void {
+
+
+		if ( did_action( 'woocommerce_update_product' ) > 1 ) {
+			return;
+		}
+
+		if ( ! $this->is_valid_update( $product ) ) {
+			return;
+		}
+
+		self::$action = 'UPDATE';
+
+		if ( Conditions::has_entity_disable( self::$entity, self::$action ) ) {
+			return;
+		}
+
+		$fields = apply_filters(
+			'ainsys_process_update_fields_' . self::$entity,
+			$this->prepare_data( $product_id ),
+			$product_id
+		);
+
+		$this->send_data( $product_id, self::$entity, self::$action, $fields );
+
+		clean_post_cache( $product_id );
+	}
+
+
+	/**
+	 * Sends updated product details to AINSYS.
+	 *
+	 * @param  int        $product_id
+	 * @param  WC_Product $product
+	 */
 	public function process_update( int $product_id, WC_Product $product ): void {
 
+
+		if ( ! isset( $_REQUEST['action'] ) ) {
+			return;
+		}
 
 		if ( $_REQUEST['action'] === 'editpost' && did_action( 'woocommerce_update_product' ) > 1 ) {
 			return;
 		}
 
-		if ( ! in_array( get_post_type( $product_id ), [ self::$entity, 'product_variation' ], true ) ) {
-			return;
-		}
-
-		if ( strtotime( $product->get_date_created()->date( 'Y-m-d H:i:s' ) ) === strtotime( $product->get_date_modified()->date( 'Y-m-d H:i:s' ) ) ) {
+		if ( ! $this->is_valid_update( $product ) ) {
 			return;
 		}
 
@@ -126,7 +191,7 @@ class Process_Products extends Process implements Hooked {
 			return;
 		}
 
-if ( ! in_array( get_post_type( $product_id ), [ self::$entity, 'product_variation' ], true ) ) {
+		if ( $this->is_valid_product_type( $product_id ) ) {
 			return;
 		}
 
@@ -137,6 +202,7 @@ if ( ! in_array( get_post_type( $product_id ), [ self::$entity, 'product_variati
 		);
 
 		$this->send_data( $product_id, self::$entity, self::$action, $fields );
+
 	}
 
 
@@ -155,7 +221,7 @@ if ( ! in_array( get_post_type( $product_id ), [ self::$entity, 'product_variati
 			return;
 		}
 
-		if ( ! in_array( get_post_type( $product_id ), [ self::$entity, 'product_variation' ], true ) ) {
+		if ( $this->is_valid_product_type( $product_id ) ) {
 			return;
 		}
 
@@ -185,7 +251,7 @@ if ( ! in_array( get_post_type( $product_id ), [ self::$entity, 'product_variati
 			return [];
 		}
 
-		if ( get_post_type( $product_id ) !== self::$entity ) {
+		if ( $this->is_valid_product_type( $product_id ) ) {
 			return [];
 		}
 
@@ -222,6 +288,28 @@ if ( ! in_array( get_post_type( $product_id ), [ self::$entity, 'product_variati
 
 		return $data;
 
+	}
+
+
+	/**
+	 * @param  int $product_id
+	 *
+	 * @return bool
+	 */
+	protected function is_valid_product_type( int $product_id ): bool {
+
+		return ! in_array( get_post_type( $product_id ), [ self::$entity, 'product_variation' ], true );
+	}
+
+
+	/**
+	 * @param  \WC_Product $product
+	 *
+	 * @return bool
+	 */
+	protected function is_valid_update( WC_Product $product ): bool {
+
+		return (bool) $product->get_date_modified();
 	}
 
 }
