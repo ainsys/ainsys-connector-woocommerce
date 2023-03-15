@@ -3,6 +3,7 @@
 namespace Ainsys\Connector\Woocommerce\Webhooks\Setup;
 
 use Ainsys\Connector\Woocommerce\Helper;
+use WC_Product_Attribute;
 
 class Setup_Product {
 
@@ -16,14 +17,14 @@ class Setup_Product {
 	public function __construct( $product, $data ) {
 
 		$this->data       = $data;
-		$this->product_id = (int) $data['ID'];
+		$this->product_id = isset( $data['ID'] ) ? (int) $data['ID'] : 0;
 		$this->product    = $product;
 	}
 
 
 	public function setup_product(): void {
 
-		$this->product->save();
+
 
 		$this->set_general_info();
 		$this->set_price_info();
@@ -36,6 +37,8 @@ class Setup_Product {
 		$this->setup_taxonomies();
 		$this->setup_external_data();
 		$this->setup_grouped_products_info();
+
+		$this->product->save();
 	}
 
 
@@ -80,7 +83,7 @@ class Setup_Product {
 
 		if ( isset( $this->data['product_attributes'] ) ) {
 
-			$this->product->set_attributes( [] );
+			//$this->product->set_attributes( [] );
 
 			$attributes = $this->get_attributes( $this->data['product_attributes'] );
 
@@ -150,14 +153,16 @@ class Setup_Product {
 	 * @param $attributes
 	 *
 	 * @return array
+	 *
+	 * @todo неверно атрибуты создаются, надо переделать
 	 */
 	protected function get_attributes( $attributes ): array { // Need to delete
 
 		$new_attributes = [];
-
+		error_log( print_r( $attributes, 1 ) );
 		foreach ( $attributes as $attribute ) {
 
-			$new_attribute = new \WC_Product_Attribute();
+			$new_attribute = new WC_Product_Attribute();
 
 			$new_attribute->set_id( 0 );
 			$new_attribute->set_name( wc_attribute_taxonomy_slug( $attribute['name'] ) );
@@ -347,7 +352,7 @@ class Setup_Product {
 
 		if ( isset( $this->data['image'] ) ) {
 			$this->product->set_image_id(
-				$this->setup_image( $this->data['image'] )
+				$this->get_image( $this->data['image'] )
 			);
 		}
 
@@ -360,7 +365,7 @@ class Setup_Product {
 				$images_ids = [];
 
 				foreach ( $gallery_images as $image ) {
-					$images_ids[] = $this->setup_image( $image );
+					$images_ids[] = $this->get_image( $image );
 				}
 
 				/**
@@ -377,11 +382,15 @@ class Setup_Product {
 	 *
 	 * @return int|\WP_Error
 	 */
-	protected function setup_image( array $image ) {
+	protected function get_image( array $image ) {
 
-		$image_id = Helper::get_attachment_id_by_url( $image['src'] );
+		$image_id = 0;
 
-		if ( $image_id && $image_id !== 0 ) {
+		if ( isset( $image['src'] ) ) {
+			$image_id = Helper::get_attachment_id_by_url( $image['src'] );
+		}
+
+		if ( $image_id !== 0 ) {
 			$image['id'] = $image_id;
 			Helper::update_image_metadata( $image );
 		} else {
@@ -501,15 +510,15 @@ class Setup_Product {
 
 	public function set_price_info(): void {
 
-		if ( isset( $this->data['price'] ) ) {
+		if ( !empty( $this->data['price'] ) ) {
 			$this->product->set_price( $this->data['price'] ); // Set Product Price
 		}
 
-		if ( isset( $this->data['regular_price'] ) ) {
+		if ( !empty( $this->data['regular_price'] ) ) {
 			$this->product->set_regular_price( $this->data['regular_price'] ); // Set Product Regular Price
 		}
 
-		if ( isset( $this->data['sale_price'] ) ) {
+		if ( !empty( $this->data['sale_price'] ) ) {
 			$this->product->set_sale_price( $this->data['sale_price'] ); // Set Product Sale Price
 		}
 
@@ -559,7 +568,6 @@ class Setup_Product {
 
 		if ( isset( $this->data['sku'] ) ) {
 			$this->product->set_sku( $this->data['sku'] ); // Set Product SKU
-
 		} else {
 			$this->product->set_sku( \Ainsys\Connector\Master\Helper::random_int( 1, 999999 ) );
 		}
