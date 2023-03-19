@@ -13,32 +13,37 @@ class Setup_Product {
 
 	protected object $product;
 
+	public bool $has_update = false;
+
 
 	public function __construct( $product, $data ) {
 
 		$this->data       = $data;
 		$this->product_id = isset( $data['ID'] ) ? (int) $data['ID'] : 0;
 		$this->product    = $product;
+
+		//$this->has_update = false;
 	}
 
 
 	public function setup_product(): void {
 
+		if ( $this->has_update() ) {
+			$this->set_general_info();
+			$this->set_price_info();
+			$this->set_taxes_info();
+			$this->set_stock_info();
+			$this->set_shipping_info();
+			$this->set_linked_products();
+			$this->set_images_info();
+			$this->set_downloadable_info();
+			$this->setup_taxonomies();
+			$this->setup_external_data();
+			$this->setup_grouped_products_info();
 
+			$this->product->save();
+		}
 
-		$this->set_general_info();
-		$this->set_price_info();
-		$this->set_taxes_info();
-		$this->set_stock_info();
-		$this->set_shipping_info();
-		$this->set_linked_products();
-		$this->set_images_info();
-		$this->set_downloadable_info();
-		$this->setup_taxonomies();
-		$this->setup_external_data();
-		$this->setup_grouped_products_info();
-
-		$this->product->save();
 	}
 
 
@@ -159,7 +164,7 @@ class Setup_Product {
 	protected function get_attributes( $attributes ): array { // Need to delete
 
 		$new_attributes = [];
-		error_log( print_r( $attributes, 1 ) );
+		//error_log( print_r( $attributes, 1 ) );
 		foreach ( $attributes as $attribute ) {
 
 			$new_attribute = new WC_Product_Attribute();
@@ -510,15 +515,15 @@ class Setup_Product {
 
 	public function set_price_info(): void {
 
-		if ( !empty( $this->data['price'] ) ) {
+		if ( ! empty( $this->data['price'] ) ) {
 			$this->product->set_price( $this->data['price'] ); // Set Product Price
 		}
 
-		if ( !empty( $this->data['regular_price'] ) ) {
+		if ( ! empty( $this->data['regular_price'] ) ) {
 			$this->product->set_regular_price( $this->data['regular_price'] ); // Set Product Regular Price
 		}
 
-		if ( !empty( $this->data['sale_price'] ) ) {
+		if ( ! empty( $this->data['sale_price'] ) ) {
 			$this->product->set_sale_price( $this->data['sale_price'] ); // Set Product Sale Price
 		}
 
@@ -538,11 +543,11 @@ class Setup_Product {
 	 */
 	public function set_general_info(): void {
 
-		if ( isset( $this->data['slug'] ) ) {
+		if ( isset( $this->data['slug'] ) && $this->product->get_slug() !== $this->data['slug'] ) {
 			$this->product->set_slug( $this->data['slug'] ); // Setup product name from $data
 		}
 
-		if ( isset( $this->data['name'] ) ) {
+		if ( isset( $this->data['name'] ) && $this->product->get_name() !== $this->data['name'] ) {
 			$this->product->set_name( $this->data['name'] ); // Setup product slug
 		}
 
@@ -550,8 +555,8 @@ class Setup_Product {
 			$this->product->set_status( $this->data['status'] ); // Set product status
 		}
 
-		if ( isset( $this->data['is_featured'] ) ) {
-			$this->product->set_featured( $this->data['is_featured'] ); // Set product featured
+		if ( isset( $this->data['featured'] ) ) {
+			$this->product->set_featured( $this->data['featured'] ); // Set product featured
 		}
 
 		if ( isset( $this->data['catalog_visibility'] ) ) {
@@ -568,16 +573,16 @@ class Setup_Product {
 
 		if ( isset( $this->data['sku'] ) ) {
 			$this->product->set_sku( $this->data['sku'] ); // Set Product SKU
-		} else {
+		} /*else {
 			$this->product->set_sku( \Ainsys\Connector\Master\Helper::random_int( 1, 999999 ) );
-		}
+		}*/
 
 		if ( isset( $this->data['menu_order'] ) ) {
 			$this->product->set_menu_order( $this->data['menu_order'] ); // Set Product menu order
 		}
 
-		if ( isset( $this->data['is_virtual'] ) ) {
-			$this->product->set_virtual( $this->data['is_virtual'] ); // Set Virtual Status
+		if ( isset( $this->data['virtual'] ) ) {
+			$this->product->set_virtual( $this->data['virtual'] ); // Set Virtual Status
 		}
 
 		/**
@@ -587,6 +592,256 @@ class Setup_Product {
 			$this->product->set_total_sales( $this->data['total_sales'] ); // Set total sales
 		}
 
+	}
+
+
+	public function has_update(): bool {
+
+		$data = [];
+
+		foreach ( $this->data as $key => $val ) {
+
+			if ( $key === 'name' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'slug' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'status' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'featured' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'bool' );
+			}
+
+			if ( $key === 'catalog_visibility' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'description' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'short_description' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'sku' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'menu_order' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'int' );
+			}
+
+			if ( $key === 'virtual' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'bool' );
+			}
+
+			if ( $key === 'total_sales' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'int' );
+			}
+
+			if ( $key === 'price' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'float' );
+			}
+
+			if ( $key === 'regular_price' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'float' );
+			}
+
+			if ( $key === 'sale_price' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'float' );
+			}
+
+			if ( $key === 'date_on_sale_from' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'date_on_sale_to' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'tax_status' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'tax_class' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'manage_stock' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'bool' );
+			}
+
+			if ( $key === 'stock_quantity' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'int' );
+			}
+
+			if ( $key === 'stock_status' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'backorders' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'sold_individually' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'bool' );
+			}
+
+			if ( $key === 'max_purchase_quantity' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'int' );
+			}
+
+			if ( $key === 'min_purchase_quantity' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'int' );
+			}
+
+			if ( $key === 'low_stock_amount' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'purchase_note' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'shipping_class_id' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'int' );
+			}
+
+			if ( $key === 'shipping_class' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'weight' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'length' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'width' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'height' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			/*if ( $key === 'upsell_ids' ) {
+
+				$data = $this->set_update_data( $key, $val, $data );
+			}
+
+			if ( $key === 'cross_sell_ids' ) {
+
+				$data = $this->set_update_data( $key, $val, $data );
+			}*/
+
+			/*if ( $key === 'rating_counts' ) {
+				$data = $this->set_update_data( $key, $val, $data );
+			}*/
+
+			if ( $key === 'reviews_allowed' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'bool' );
+			}
+
+			if ( $key === 'average_rating' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'float' );
+			}
+
+			if ( $key === 'review_count' ) {
+				$data = $this->set_update_data( $key, $val, $data, 'int' );
+			}
+
+		}
+
+		return in_array( 'yes', $data, true );
+	}
+
+
+	/**
+	 * @param  string $key
+	 * @param         $val
+	 * @param  array  $data
+	 * @param  string $type
+	 *
+	 * @return array
+	 */
+	protected function set_update_data( string $key, $val, array $data, $type = 'string' ): array {
+
+		$method = 'get_' . $key;
+
+		if ( $type === 'string' && $this->is_update_data_string( $key, $val, $method ) ) {
+			$data[ $key ] = 'no';
+		} elseif ( $type === 'bool' && $this->is_update_data_bool( $key, $val, $method ) ) {
+			$data[ $key ] = 'no';
+		} elseif ( $type === 'int' && $this->is_update_data_int( $key, $val, $method ) ) {
+			$data[ $key ] = 'no';
+		} elseif ( $type === 'float' && $this->is_update_data_float( $key, $val, $method ) ) {
+			$data[ $key ] = 'no';
+		} else {
+			$data[ $key ] = 'yes';
+		}
+
+		return $data;
+	}
+
+
+	/**
+	 * @param  string $key
+	 * @param         $val
+	 * @param         $method
+	 *
+	 * @return bool
+	 */
+	protected function is_update_data_string( string $key, $val, $method ): bool {
+
+		return (string) $this->product->$method() === (string) $val;
+	}
+
+
+	/**
+	 * @param  string $key
+	 * @param         $val
+	 * @param         $method
+	 *
+	 * @return bool
+	 */
+	protected function is_update_data_bool( string $key, $val, $method ): bool {
+
+		return (bool) $this->product->$method() === (bool) $val;
+	}
+
+
+	/**
+	 * @param  string $key
+	 * @param         $val
+	 * @param         $method
+	 *
+	 * @return bool
+	 */
+	protected function is_update_data_int( string $key, $val, $method ): bool {
+
+		return (int) $this->product->$method() === (int) $val;
+	}
+
+
+	/**
+	 * @param  string $key
+	 * @param         $val
+	 * @param         $method
+	 *
+	 * @return bool
+	 */
+	protected function is_update_data_float( string $key, $val, $method ): bool {
+
+		return (float) $this->product->$method() === (float) $val;
 	}
 
 }

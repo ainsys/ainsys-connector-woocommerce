@@ -112,11 +112,6 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 
 		if ( $data['type'] === 'variable' && isset( $data['variations'] ) && ! empty( $data['variations'] ) ) {
 
-			/**
-			 * Need save product to DB before create variations
-			 */
-			$product->save();
-
 			$variations_ids = $product->get_children();
 
 			foreach ( $data['variations'] as $variation_data ) {
@@ -129,8 +124,6 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 
 				$setup_variation = new Setup_Product_Variation( $variation, $variation_data, $product );
 				$setup_variation->setup_product_variation();
-
-				$variation->save();
 			}
 
 			if ( is_array( $variations_ids ) && ! empty( $variations_ids ) ) {
@@ -142,7 +135,6 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 
 		}
 
-		$product->save();
 
 		return [
 			'id'      => $product->get_id(),
