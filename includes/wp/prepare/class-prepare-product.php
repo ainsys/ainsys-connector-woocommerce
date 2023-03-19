@@ -106,13 +106,13 @@ class Prepare_Product {
 			'name'               => $this->product->get_name(),
 			'slug'               => $this->product->get_slug(),
 			'status'             => $this->product->get_status(),
-			'is_featured'        => $this->product->get_featured(),
+			'featured'           => $this->product->get_featured(),
 			'catalog_visibility' => $this->product->get_catalog_visibility(),
 			'description'        => $this->product->get_description(),
 			'short_description'  => $this->product->get_short_description(),
 			'sku'                => $this->product->get_sku(),
 			'menu_order'         => $this->product->get_menu_order(),
-			'is_virtual'         => $this->product->get_virtual(),
+			'virtual'            => $this->product->get_virtual(),
 			'total_sales'        => $this->product->get_total_sales(),
 		];
 	}
@@ -375,10 +375,10 @@ class Prepare_Product {
 
 		return [
 			'manage_stock'          => $this->product->get_manage_stock(),
-			'stock_qty'             => $this->product->get_stock_quantity(),
+			'stock_quantity'        => $this->product->get_stock_quantity(),
 			'stock_status'          => $this->product->get_stock_status(),
 			'backorders'            => $this->product->get_backorders(),
-			'sold_individuality'    => $this->product->get_sold_individually(),
+			'sold_individually'     => $this->product->get_sold_individually(),
 			'max_purchase_quantity' => $this->product->get_max_purchase_quantity(),
 			'min_purchase_quantity' => $this->product->get_min_purchase_quantity(),
 			'low_stock_amount'      => $this->product->get_low_stock_amount(),
@@ -410,7 +410,7 @@ class Prepare_Product {
 		}
 
 		return [
-			'price'     => (int) $this->product->get_price(),
+			'price'             => (int) $this->product->get_price(),
 			'regular_price'     => (int) $this->product->get_regular_price(),
 			'sale_price'        => (int) $this->product->get_sale_price(),
 			'date_on_sale_from' => $sale_date_from,
