@@ -30,15 +30,17 @@ class Process_Products extends Process implements Hooked {
 		}
 
 		add_action( 'deleted_post', [ $this, 'process_delete' ], 10, 2 );
-		add_action( 'trashed_post', [ $this, 'process_trash' ], 10, 1 );
 
 	}
 
 
 	public function process_remote_create( $product, $data_store ): void {
 
-
 		if ( did_action( 'woocommerce_after_product_object_save' ) > 1 || $product->get_date_modified() ) {
+			return;
+		}
+
+		if ( did_action( 'ainsys_webhook_action_handlers' ) >= 0 ) {
 			return;
 		}
 
@@ -70,7 +72,6 @@ class Process_Products extends Process implements Hooked {
 	 * @return void
 	 */
 	public function process_create( int $product_id, $post, bool $update, $post_before ): void {
-
 
 		self::$action = 'CREATE';
 
@@ -143,35 +144,9 @@ class Process_Products extends Process implements Hooked {
 	 */
 	public function process_delete( int $product_id, $product ): void {
 
-		self::$action = 'DELETE';
-
-		if ( Conditions::has_entity_disable( self::$entity, self::$action ) ) {
+		if ( did_action( 'ainsys_webhook_action_handlers' ) >= 0 && false === is_admin() ) {
 			return;
 		}
-
-		if ( $this->is_valid_product_type( $product_id ) ) {
-			return;
-		}
-
-		$fields = apply_filters(
-			'ainsys_process_delete_fields_' . self::$entity,
-			$this->prepare_data( $product_id ),
-			$product_id
-		);
-
-		$this->send_data( $product_id, self::$entity, self::$action, $fields );
-
-	}
-
-
-	/**
-	 * Sends delete post details to AINSYS
-	 *
-	 * @param  int $product_id
-	 *
-	 * @return void
-	 */
-	public function process_trash( int $product_id ): void {
 
 		self::$action = 'DELETE';
 

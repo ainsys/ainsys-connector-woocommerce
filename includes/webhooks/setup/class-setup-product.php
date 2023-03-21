@@ -595,6 +595,10 @@ class Setup_Product {
 	}
 
 
+	/**
+	 * @return bool
+	 * @todo сделать проверку на массивы
+	 */
 	public function has_update(): bool {
 
 		$data = [];
