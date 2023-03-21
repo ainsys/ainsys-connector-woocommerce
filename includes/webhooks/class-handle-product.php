@@ -34,12 +34,15 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 
 		if ( Conditions::has_entity_disable( self::$entity, $action, 'incoming' ) ) {
 
-			$message = sprintf( __( 'Error: %s creation is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity . ' ' . $data['name'] );
-			$this->handle_error( $data, '', $message, self::$entity, $action );
-
 			return [
 				'id'      => 0,
-				'message' => $message,
+				'message' => $this->handle_error(
+					$data,
+					'',
+					sprintf( __( 'Error: %s creation is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity ),
+					self::$entity,
+					$action
+				),
 			];
 		}
 
@@ -47,12 +50,15 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 
 		if ( ! is_object( $new_product ) ) {
 
-			$message = sprintf( __( 'Error: %s creation is failed.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity . ' ' . $data['name'] );
-			$this->handle_error( $data, '', $message, self::$entity, $action );
-
 			return [
 				'id'      => 0,
-				'message' => $message,
+				'message' => $this->handle_error(
+					$data,
+					'',
+					sprintf( __( 'Error: %s creation is failed.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity ),
+					self::$entity,
+					$action
+				),
 			];
 		}
 
@@ -85,12 +91,15 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 
 		if ( Conditions::has_entity_disable( self::$entity, $action, 'incoming' ) ) {
 
-			$message = sprintf( __( 'Error: %s update is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity . ' ' . $data['name'] );
-			$this->handle_error( $data, '', $message, self::$entity, $action );
-
 			return [
-				'id'      => $object_id,
-				'message' => $message,
+				'id'      => 0,
+				'message' => $this->handle_error(
+					$data,
+					'',
+					sprintf( __( 'Error: %s update is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity ),
+					self::$entity,
+					$action
+				),
 			];
 		}
 
@@ -98,12 +107,15 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 
 		if ( ! is_object( $product ) ) {
 
-			$message = sprintf( __( 'Error: %s is not exist.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity . ' ' . $data['name'] );
-			$this->handle_error( $data, '', $message, self::$entity, $action );
-
 			return [
 				'id'      => $object_id,
-				'message' => $message,
+				'message' => $this->handle_error(
+					$data,
+					'',
+					sprintf( __( 'Error: %s is not exist.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity . ' ' . $data['name'] ),
+					self::$entity,
+					$action
+				),
 			];
 
 		}
@@ -135,7 +147,6 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 
 		}
 
-
 		return [
 			'id'      => $product->get_id(),
 			'message' => $this->get_message( $product->get_id(), $data, self::$entity, $action ),
@@ -154,12 +165,15 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 
 		if ( Conditions::has_entity_disable( self::$entity, $action, 'incoming' ) ) {
 
-			$message = sprintf( __( 'Error: %s delete is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity );
-			$this->handle_error( $data, '', $message, self::$entity, $action );
-
 			return [
 				'id'      => $object_id,
-				'message' => $message,
+				'message' => $this->handle_error(
+					$data,
+					'',
+					sprintf( __( 'Error: %s delete is disabled in settings.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity . ' ' . $data['name'] ),
+					self::$entity,
+					$action
+				),
 			];
 
 		}
@@ -191,17 +205,18 @@ class Handle_Product extends Handle implements Hooked, Webhook_Handler {
 
 		if ( ! $result ) {
 
-			$message = sprintf( __( 'Error: %s delete is failed.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity );
-			$this->handle_error( $data, '', $message, self::$entity, $action );
-
 			return [
 				'id'      => 0,
-				'message' => $message,
+				'message' => $this->handle_error(
+					$data,
+					'',
+					sprintf( __( 'Error: %s delete is failed.', AINSYS_CONNECTOR_TEXTDOMAIN ), self::$entity . ' ' . $data['name'] ),
+					self::$entity,
+					$action
+				),
 			];
 
 		}
-
-		//$message = sprintf( __( 'Success: %s delete is done.', AINSYS_CONNECTOR_WOOCOMMERCE_TEXTDOMAIN ), self::$entity);
 
 		return [
 			'id'      => $object_id,

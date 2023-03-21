@@ -13,16 +13,12 @@ class Setup_Product {
 
 	protected object $product;
 
-	public bool $has_update = false;
-
 
 	public function __construct( $product, $data ) {
 
 		$this->data       = $data;
 		$this->product_id = isset( $data['ID'] ) ? (int) $data['ID'] : 0;
 		$this->product    = $product;
-
-		//$this->has_update = false;
 	}
 
 
@@ -595,6 +591,10 @@ class Setup_Product {
 	}
 
 
+	/**
+	 * @return bool
+	 * @todo сделать проверку на массивы
+	 */
 	public function has_update(): bool {
 
 		$data = [];
